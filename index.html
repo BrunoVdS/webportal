@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Node Portal — node.local</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>Node Portal</h1>
+    <p>Welkom op <strong>node.local</strong>. Ja, een echte URL. Zonder die sexy cijfers.</p>
+  </header>
+
+  <main class="grid">
+    <!-- Netwerkmonitoring -->
+    <section class="card">
+      <h2>Netwerkmonitoring</h2>
+      <div class="keyvals" id="netmon">
+        <div><span>SSID</span><strong id="ssid">—</strong></div>
+        <div><span>AP IPv4</span><strong id="apip">—</strong></div>
+        <div><span>Clients</span><strong id="clients">—</strong></div>
+        <div><span>Uptime</span><strong id="uptime">—</strong></div>
+      </div>
+      <p class="muted">Data wordt later gevoed door <code>/api/status</code>. Voor nu: placeholders. Doe alsof.</p>
+    </section>
+
+    <!-- Fileserver -->
+    <section class="card">
+      <h2>Bestanden</h2>
+      <p>Alles wat je in <code>/var/www/node/files</code> gooit, verschijnt hier. Downloadfeestje.</p>
+      <ul id="filelist" class="filelist">
+        <li><a href="/files/" rel="nofollow">Open de bestandslijst</a> (autoindex)</li>
+      </ul>
+    </section>
+
+    <!-- Mesh monitoring -->
+    <section class="card">
+      <h2>Mesh Monitoring</h2>
+      <div class="mesh">
+        <div class="mesh-node">
+          <div class="dot"></div>
+          <div class="label">node.local (dit ben jij)</div>
+        </div>
+        <div class="mesh-links">
+          <span class="link dashed"></span>
+          <span class="link dashed"></span>
+          <span class="link dashed"></span>
+        </div>
+        <p class="muted">Toekomstmuziek via <code>/api/mesh</code>. Nu vooral decoratie. Mooi hè.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>© <span id="year"></span> Node Portal — Gemaakt voor jouw glorieuze Raspberry Pi AP.</small>
+  </footer>
+
+  <script>
+    // simpele placeholder JS (klaar voor echte endpoints /api/status en /api/mesh)
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Dummy vulsel zodat de pagina niet totaal zielig oogt
+    const demo = {
+      ssid: 'MyPiAP',
+      apip: '192.168.12.1/24',
+      clients: 0,
+      uptime: '—'
+    };
+    document.getElementById('ssid').textContent = demo.ssid;
+    document.getElementById('apip').textContent = demo.apip;
+    document.getElementById('clients').textContent = demo.clients;
+    document.getElementById('uptime').textContent = demo.uptime;
+  </script>
+</body>
+</html>
