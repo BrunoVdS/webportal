@@ -8,8 +8,8 @@ set -euo pipefail
 die(){ echo "💀 $*" >&2; exit 1; }
 log(){ echo -e "[*] $*"; }
 
-sudo apt-get update 
-sudo apt-get upgrade -y
+apt-get update 
+apt-get upgrade -y
 
 [[ $EUID -eq 0 ]] || die "Run dit script met sudo, kampioen."
 command -v nmcli >/dev/null || die "nmcli ontbreekt. Dit vereist Raspberry Pi OS Bookworm met NetworkManager."
