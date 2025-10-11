@@ -216,7 +216,7 @@ prompt_with_default() {
 
 prompt_with_default MESH_ID "Mesh ID" "MYMESH"
 prompt_with_default IFACE "Wireless interface" "wlan1"
-prompt_with_default IP_CIDR "Node IP/CIDR on bat0" "10.42.0.1/24"
+prompt_with_default IP_CIDR "Node IP/CIDR on bat0" "192.168.0.1/24"
 prompt_with_default COUNTRY "Country code (regdom)" "BE"
 prompt_with_default FREQ "Frequency (MHz for 5GHz, of 2412/2437/2462 etc.)" "5180"
 prompt_with_default BANDWIDTH "Bandwidth" "HT20"
