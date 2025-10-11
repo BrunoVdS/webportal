@@ -38,7 +38,7 @@ info()  {
 warn()  {
   local message="WARN: $*"
   if [ -e /proc/$$/fd/3 ]; then
-    echo "[$(timestamp)] ${message}" | tee -a "$LOGFILE" >&3
+    info "[$(timestamp)] ${message}" | tee -a "$LOGFILE" >&3
   else
     echo "[$(timestamp)] ${message}"
   fi
@@ -368,14 +368,13 @@ info "Mesh setup done. Gebruik 'meshctl status' voor je daily dosis realiteit."
 
 
 # === Reticulum ============================================================
-
 info "Install Reticulum "
 sudo pip3 install --upgrade rns --break-system-packages
 
 info "Update PATH to local bin folder"
 if ! grep -Fxq "export PATH=\$PATH:~/.local/bin" ~/.bashrc
 then
-    info 'export PATH=$PATH:~/.local/bin' >> ~/.bashrc
+    echo 'export PATH=$PATH:~/.local/bin' >> ~/.bashrc
 fi
 source ~/.bashrc
 
