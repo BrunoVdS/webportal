@@ -38,9 +38,9 @@ info()  {
 warn()  {
   local message="WARN: $*"
   if [ -e /proc/$$/fd/3 ]; then
-    info "[$(timestamp)] ${message}" | tee -a "$LOGFILE" >&3
+    echo "[$(timestamp)] ${message}" | tee -a "$LOGFILE" >&3
   else
-    echo "[$(timestamp)] ${message}"
+    echo "[$(timestamp)] ${message}" | tee -a "$LOGFILE"
   fi
 }
 
@@ -368,36 +368,36 @@ info "Mesh setup done. Gebruik 'meshctl status' voor je daily dosis realiteit."
 
 
 # === Reticulum ============================================================
- info "Installing Reticulum."
-  ensure_packages python3 python3-pip
-  pip3 install --upgrade rns --break-system-packages
+info "Installing Reticulum."
 
-  local bashrc="$TARGET_HOME/.bashrc"
-  if ! grep -Fxq 'export PATH="$PATH:$HOME/.local/bin"' "$bashrc" 2>/dev/null; then
-    printf '%s\n' 'export PATH="$PATH:$HOME/.local/bin"' >>"$bashrc"
-    info "Added ~/.local/bin to PATH in $bashrc"
-  fi
+pip3 install --upgrade rns --break-system-packages
 
-  # shellcheck disable=SC1090
-  source "$bashrc" || true
+bashrc="$TARGET_HOME/.bashrc"
+touch "$bashrc"
+if ! grep -Fxq 'export PATH="$PATH:$HOME/.local/bin"' "$bashrc" 2>/dev/null; then
+  printf '%s\n' 'export PATH="$PATH:$HOME/.local/bin"' >>"$bashrc"
+  info "Added ~/.local/bin to PATH in $bashrc"
+fi
 
-  if ! command -v rnsd >/dev/null 2>&1; then
-    warn "rnsd not found in PATH; attempting to locate binary."
-    local RN_PATH
-    RN_PATH=$(find / -type f -name "rnsd" 2>/dev/null | head -n1 || true)
-    if [[ -n "$RN_PATH" && -e "$RN_PATH" ]]; then
-      if ln -sf "$RN_PATH" /usr/local/bin/rnsd; then
-        info "Created symlink for rnsd at /usr/local/bin/rnsd"
-      else
-        warn "Failed to create rnsd symlink from $RN_PATH"
-      fi
+# shellcheck disable=SC1090
+. "$bashrc" || true
+
+if ! command -v rnsd >/dev/null 2>&1; then
+  warn "rnsd not found in PATH; attempting to locate binary."
+  RN_PATH=$(find / -type f -name "rnsd" 2>/dev/null | head -n1 || true)
+  if [[ -n "$RN_PATH" && -e "$RN_PATH" ]]; then
+    if ln -sf "$RN_PATH" /usr/local/bin/rnsd; then
+      info "Created symlink for rnsd at /usr/local/bin/rnsd"
     else
-      warn "Could not locate rnsd binary automatically."
+      warn "Failed to create rnsd symlink from $RN_PATH"
     fi
+  else
+    warn "Could not locate rnsd binary automatically."
   fi
+fi
 
 info "Create Systemd service (automated startup)"
-sudo tee /etc/systemd/system/rnsd.service > /dev/null <<EOF
+tee /etc/systemd/system/rnsd.service > /dev/null <<EOF
 [Unit]
 Description=Reticulum Network Stack
 After=network.target
@@ -410,9 +410,9 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-sudo systemctl daemon-reload
-sudo systemctl enable rnsd
-sudo systemctl start rnsd
+systemctl daemon-reload
+systemctl enable rnsd
+systemctl start rnsd
 
 info "Reticulum installed"
 
