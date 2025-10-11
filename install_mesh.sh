@@ -395,7 +395,6 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/rnsd
 Restart=always
-User=pi
 
 [Install]
 WantedBy=multi-user.target
