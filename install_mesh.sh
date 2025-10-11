@@ -179,14 +179,51 @@ info "Creating mesh network."
 
 # ---- Interactieve defaults ------------------------------------------------------
 # ---- Interactieve defaults ------------------------------------------------------
-read -r -p "Mesh ID [MYMESH]: " MESH_ID < /dev/tty; MESH_ID="${MESH_ID:-MYMESH}"
-read -r -p "Wireless interface [wlan1]: " IFACE < /dev/tty; IFACE="${IFACE:-wlan1}"
-read -r -p "Node IP/CIDR on bat0 [10.42.0.1/24]: " IP_CIDR < /dev/tty; IP_CIDR="${IP_CIDR:-10.42.0.1/24}"
-read -r -p "Country code (regdom) [BE]: " COUNTRY < /dev/tty; COUNTRY="${COUNTRY:-BE}"
-read -r -p "Frequency (MHz for 5GHz, of 2412/2437/2462 etc.) [5180]: " FREQ < /dev/tty; FREQ="${FREQ:-5180}"
-read -r -p "Bandwidth [HT20]: " BANDWIDTH < /dev/tty; BANDWIDTH="${BANDWIDTH:-HT20}"
-read -r -p "MTU voor bat0 [1468]: " MTU < /dev/tty; MTU="${MTU:-1468}"
-read -r -p "IBSS fallback BSSID [02:12:34:56:78:9A]: " BSSID < /dev/tty; BSSID="${BSSID:-02:12:34:56:78:9A}"
+
+prompt_with_default() {
+  local __var_name="$1" __prompt="$2" __default="$3" __value
+  local __current_value="${!__var_name:-}"
+
+  if [ -n "$__current_value" ]; then
+    printf -v "$__var_name" '%s' "$__current_value"
+    info "Using preset value for $__var_name: ${!__var_name}"
+    return
+  fi
+
+  if ! [ -t 0 ] && ! [ -t 1 ]; then
+    warn "No interactive terminal detected. Falling back to default for $__var_name: $__default"
+    printf -v "$__var_name" '%s' "$__default"
+    return
+  fi
+
+  while true; do
+    if [ -n "$__default" ]; then
+      printf '%s [%s]: ' "$__prompt" "$__default" > /dev/tty
+    else
+      printf '%s: ' "$__prompt" > /dev/tty
+    fi
+
+    IFS= read -r __value < /dev/tty || __value=""
+    __value="${__value:-$__default}"
+
+    if [ -n "$__value" ]; then
+      break
+    fi
+
+    warn "A value is required for $__var_name. Please try again."
+  done
+
+  printf -v "$__var_name" '%s' "$__value"
+}
+
+prompt_with_default MESH_ID "Mesh ID" "MYMESH"
+prompt_with_default IFACE "Wireless interface" "wlan1"
+prompt_with_default IP_CIDR "Node IP/CIDR on bat0" "10.42.0.1/24"
+prompt_with_default COUNTRY "Country code (regdom)" "BE"
+prompt_with_default FREQ "Frequency (MHz for 5GHz, of 2412/2437/2462 etc.)" "5180"
+prompt_with_default BANDWIDTH "Bandwidth" "HT20"
+prompt_with_default MTU "MTU voor bat0" "1468"
+prompt_with_default BSSID "IBSS fallback BSSID" "02:12:34:56:78:9A"
 
 
 # ---- Config persist -------------------------------------------------------------
