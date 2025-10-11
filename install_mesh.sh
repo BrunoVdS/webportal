@@ -178,8 +178,6 @@ sleep 5
 info "Creating mesh network."
 
 # ---- Interactieve defaults ------------------------------------------------------
-# ---- Interactieve defaults ------------------------------------------------------
-
 prompt_with_default() {
   local __var_name="$1" __prompt="$2" __default="$3" __value
   local __current_value="${!__var_name:-}"
