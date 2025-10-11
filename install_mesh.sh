@@ -368,22 +368,33 @@ info "Mesh setup done. Gebruik 'meshctl status' voor je daily dosis realiteit."
 
 
 # === Reticulum ============================================================
-info "Install Reticulum "
-sudo pip3 install --upgrade rns --break-system-packages
+ info "Installing Reticulum."
+  ensure_packages python3 python3-pip
+  pip3 install --upgrade rns --break-system-packages
 
-info "Update PATH to local bin folder"
-if ! grep -Fxq "export PATH=\$PATH:~/.local/bin" ~/.bashrc
-then
-    echo 'export PATH=$PATH:~/.local/bin' >> ~/.bashrc
-fi
-source ~/.bashrc
+  local bashrc="$TARGET_HOME/.bashrc"
+  if ! grep -Fxq 'export PATH="$PATH:$HOME/.local/bin"' "$bashrc" 2>/dev/null; then
+    printf '%s\n' 'export PATH="$PATH:$HOME/.local/bin"' >>"$bashrc"
+    info "Added ~/.local/bin to PATH in $bashrc"
+  fi
 
-info "Check install status"
-if ! command -v rnsd &> /dev/null
-then
-    info "Reticulum not found in PATH, tryign to relink"
-    sudo ln -s $(find / -type f -name "rnsd" 2>/dev/null | head -n 1) /usr/local/bin/rnsd 2>/dev/null
-fi
+  # shellcheck disable=SC1090
+  source "$bashrc" || true
+
+  if ! command -v rnsd >/dev/null 2>&1; then
+    warn "rnsd not found in PATH; attempting to locate binary."
+    local RN_PATH
+    RN_PATH=$(find / -type f -name "rnsd" 2>/dev/null | head -n1 || true)
+    if [[ -n "$RN_PATH" && -e "$RN_PATH" ]]; then
+      if ln -sf "$RN_PATH" /usr/local/bin/rnsd; then
+        info "Created symlink for rnsd at /usr/local/bin/rnsd"
+      else
+        warn "Failed to create rnsd symlink from $RN_PATH"
+      fi
+    else
+      warn "Could not locate rnsd binary automatically."
+    fi
+  fi
 
 info "Create Systemd service (automated startup)"
 sudo tee /etc/systemd/system/rnsd.service > /dev/null <<EOF
