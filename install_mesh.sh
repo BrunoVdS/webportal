@@ -184,7 +184,7 @@ prompt_with_default() {
 
   if [ -n "$__current_value" ]; then
     printf -v "$__var_name" '%s' "$__current_value"
-    info "Using preset value for $__var_name: ${!__var_name}"
+    echo "Using preset value for $__var_name: ${!__var_name}"
     return
   fi
 
