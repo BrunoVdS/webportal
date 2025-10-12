@@ -482,7 +482,46 @@ fi
 
 if ! command -v rnsd >/dev/null 2>&1; then
   warn "rnsd not found in PATH; attempting to locate binary."
-  RN_PATH=$(find / -type f -name "rnsd" 2>/dev/null | head -n1 || true)
+  RN_PATH=$(python3 - <<'PY' 2>/dev/null || true
+from pathlib import Path
+import sysconfig
+
+def candidate_dirs():
+    seen = set()
+    schemes = [sysconfig.get_default_scheme()]
+    schemes.extend(["posix_prefix", "posix_local", "posix_user"])
+    for scheme in schemes:
+        try:
+            path = sysconfig.get_path("scripts", scheme)
+        except (KeyError, ValueError):
+            continue
+        if not path:
+            continue
+        resolved = Path(path).expanduser()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        yield resolved
+
+    extras = [Path("/usr/local/bin"), Path("/usr/bin"), Path.home() / ".local/bin"]
+    for extra in extras:
+        if extra in seen:
+            continue
+        seen.add(extra)
+        yield extra
+
+
+for directory in candidate_dirs():
+    candidate = directory / "rnsd"
+    try:
+        if candidate.is_file():
+            print(candidate)
+            break
+    except OSError:
+        continue
+PY
+  )
+  RN_PATH=${RN_PATH//$'\n'/}
   if [[ -n "$RN_PATH" && -e "$RN_PATH" ]]; then
     if ln -sf "$RN_PATH" /usr/local/bin/rnsd; then
       info "Created symlink for rnsd at /usr/local/bin/rnsd"
