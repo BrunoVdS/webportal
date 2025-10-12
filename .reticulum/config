@@ -97,6 +97,17 @@
     type = AutoInterface
     enabled = Yes
 
+  # Bind Reticulum directly to the batman-adv mesh interface created by the
+  # install_mesh.sh script. When meshctl brings up the mesh, it creates the
+  # bat0 interface and assigns the mesh subnet address. Reticulum will then use
+  # IPv6 link-local discovery on bat0 to talk to other Reticulum nodes that are
+  # also connected to the mesh.
+  [[Mesh BATMAN Interface]]
+    type = AutoInterface
+    interface_enabled = Yes
+    ifacename = bat0
+    group = mesh
+
   [[TCP Server Interface]]
     type = TCPServerInterface
     interface_enabled = True
