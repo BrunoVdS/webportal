@@ -23,7 +23,7 @@ LOGFILE="/var/log/mesh-install.log"
     # Create timestamp variable
 timestamp() { date +%F\ %T; }
 
-    # Log helpers (log, info, warn and error)
+  # Log helpers (log, info, warn and error)
 log()   { echo "[$(timestamp)] $*" >>"$LOGFILE"; }
 
 info()  {
@@ -56,6 +56,104 @@ error() {
   # === Define a function to check if a command exists; store path to systemctl if found, else empty
 command_exists() { command -v "$1" >/dev/null ; }
 SYSTEMCTL=$(command -v systemctl || true)
+
+
+  # === Interactive helper functions
+ask() {
+  local prompt="$1"
+  local default_value="${2-}"
+  local var_name="${3-}"
+  local input prompt_text
+
+  if [ -n "$default_value" ]; then
+    prompt_text="$prompt [$default_value]: "
+  else
+    prompt_text="$prompt: "
+  fi
+
+  read -r -p "$prompt_text" input || return 1
+  input="${input:-$default_value}"
+
+  if [ -n "$var_name" ]; then
+    printf -v "$var_name" '%s' "$input"
+  else
+    printf '%s\n' "$input"
+  fi
+}
+
+ask_hidden() {
+  local prompt="$1"
+  local default_value="${2-}"
+  local var_name="${3-}"
+  local input prompt_text
+
+  if [ -n "$default_value" ]; then
+    prompt_text="$prompt [$default_value]: "
+  else
+    prompt_text="$prompt: "
+  fi
+
+  read -rs -p "$prompt_text" input || return 1
+  echo
+  input="${input:-$default_value}"
+
+  if [ -n "$var_name" ]; then
+    printf -v "$var_name" '%s' "$input"
+  else
+    printf '%s\n' "$input"
+  fi
+}
+
+confirm() {
+  local prompt="$1"
+  local default_answer="${2-}"
+  local default_choice suffix reply normalized
+
+  if [ -z "$default_answer" ]; then
+    default_choice="y"
+    suffix="[Y/n]"
+  else
+    normalized=$(printf '%s' "$default_answer" | tr '[:upper:]' '[:lower:]')
+    case "$normalized" in
+      y|yes)
+        default_choice="y"
+        suffix="[Y/n]"
+        ;;
+      n|no)
+        default_choice="n"
+        suffix="[y/N]"
+        ;;
+      *)
+        default_choice=""
+        suffix="[y/n]"
+        ;;
+    esac
+  fi
+
+  while :; do
+    read -r -p "$prompt $suffix " reply || return 1
+    if [ -n "$default_choice" ] && [ -z "$reply" ]; then
+      reply="$default_choice"
+    fi
+    normalized=$(printf '%s' "$reply" | tr '[:upper:]' '[:lower:]')
+    case "$normalized" in
+      y|yes)
+        return 0
+        ;;
+      n|no)
+        return 1
+        ;;
+      *)
+        echo "Antwoord met 'y' of 'n'."
+        ;;
+    esac
+  done
+}
+
+die() {
+  error "$*"
+  exit 1
+}
 
 
   # === Root only
@@ -91,7 +189,7 @@ info "Summary: OS=${RPI_OS_PRETTY_NAME:-$(. /etc/os-release; echo $PRETTY_NAME)}
 
   #add some info that before did not got logged,
 info "Log file is created."
-info "location: /var/log/mesh_radio.log"
+info "location: $LOGFILE"
 
 info "Detected operating system: ${RPI_OS_PRETTY_NAME:-unknown}."
 
