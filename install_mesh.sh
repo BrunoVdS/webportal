@@ -91,7 +91,7 @@ info "Summary: OS=${RPI_OS_PRETTY_NAME:-$(. /etc/os-release; echo $PRETTY_NAME)}
 
   #add some info that before did not got logged,
 info "Log file is created."
-info "location: /var/log/mesh_radio.log"
+info "location: $LOGFILE"
 
 info "Detected operating system: ${RPI_OS_PRETTY_NAME:-unknown}."
 
