@@ -11,3 +11,4 @@ Raspberry Pi access point and website with all features
 * Replace the `pip3 --break-system-packages` installation of Reticulum with a distribution-friendly alternative (e.g., virtual environment, packaged dependency, or documented prerequisite) to avoid system package conflicts.
 * Provide a faster, deterministic method for locating the `rnsd` binary instead of recursively searching the entire filesystem with `find /`.
 * Harden the default Reticulum configuration by disabling or restricting the TCP server interface so the service is not exposed on unintended networks by default.
+* Check all logs for concistency, change most log in to echo in the ap and webserver config.
