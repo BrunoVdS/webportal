@@ -1,3 +1,6 @@
+# mesh network
+creating the bat0 mesh for the nodes to connect
+
 # webportal
 Raspberry Pi access point and website with all features
 
