@@ -12,3 +12,6 @@ Raspberry Pi access point and website with all features
 * Provide a faster, deterministic method for locating the `rnsd` binary instead of recursively searching the entire filesystem with `find /`.
 * Harden the default Reticulum configuration by disabling or restricting the TCP server interface so the service is not exposed on unintended networks by default.
 * Check all logs for concistency, change most log in to echo in the ap and webserver config.
+* Enhance download-page with clean interface (pics of software, menu interface, ...)
+* Build in red version of the website for night use.
+* Enhance the index.html, menu interface, mesh info, status of the instlled services.
