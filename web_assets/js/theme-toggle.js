@@ -2,6 +2,10 @@
   const THEME_KEY = "preferredTheme";
   const body = document.body;
   const toggleButton = document.getElementById("theme-toggle");
+  const mediaQuery =
+    typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-color-scheme: dark)")
+      : null;
 
   if (!toggleButton) {
     return;
@@ -24,7 +28,7 @@
 
   function storeTheme(theme) {
     try {
-      if (theme === "night-vision") {
+      if (theme === "night-vision" || theme === "standard") {
         localStorage.setItem(THEME_KEY, theme);
       } else {
         localStorage.removeItem(THEME_KEY);
@@ -34,8 +38,41 @@
     }
   }
 
-  let currentTheme = getStoredTheme() === "night-vision" ? "night-vision" : "standard";
+  function determineInitialTheme() {
+    const storedTheme = getStoredTheme();
+
+    if (storedTheme === "night-vision" || storedTheme === "standard") {
+      return storedTheme;
+    }
+
+    if (mediaQuery && mediaQuery.matches) {
+      return "night-vision";
+    }
+
+    return "standard";
+  }
+
+  let currentTheme = determineInitialTheme();
   applyTheme(currentTheme);
+
+  if (mediaQuery) {
+    const handlePreferenceChange = (event) => {
+      const storedTheme = getStoredTheme();
+
+      if (storedTheme === "night-vision" || storedTheme === "standard") {
+        return;
+      }
+
+      currentTheme = event.matches ? "night-vision" : "standard";
+      applyTheme(currentTheme);
+    };
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handlePreferenceChange);
+    } else if (typeof mediaQuery.addListener === "function") {
+      mediaQuery.addListener(handlePreferenceChange);
+    }
+  }
 
   toggleButton.addEventListener("click", () => {
     currentTheme = currentTheme === "night-vision" ? "standard" : "night-vision";
