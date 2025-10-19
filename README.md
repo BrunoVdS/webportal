@@ -19,7 +19,6 @@ Creating webportal with different functions:
 ## Follow-up tasks
 
 * Enhance download-page with clean interface (pics of software, menu interface, ...)
-* Build in red version of the website for night use.
 * Enhance the index.html, menu interface, mesh info, status of the instlled services.
 * Create a QR code on the landings page to give temporary access to the AP. valid for hr. Or have code pressent that can create this code.
 
