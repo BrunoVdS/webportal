@@ -101,6 +101,10 @@
 
   [[Mesh TCP Gateway]]
     type = TCPServerInterface
-    listen_ip = 0.0.0.0 #via security build in via nftables
+    listen_ip = 0.0.0.0
     listen_port = 4242
-    enabled = Yes
+    # Disabled by default so the TCP gateway is not exposed until
+    # administrators explicitly enable it (ideally after verifying
+    # firewall rules such as the nftables policy installed by the
+    # mesh setup script).
+    enabled = No
