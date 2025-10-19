@@ -144,7 +144,7 @@ confirm() {
         return 1
         ;;
       *)
-        echo "Antwoord met 'y' of 'n'."
+        echo "Please answer with 'y' or 'n'."
         ;;
     esac
   done
@@ -167,7 +167,7 @@ info "Running as root (user $(id -un))."
 
   # === Logging
     # Creating the log file
-echo "Creating log file."
+echo "Creating log file at $LOGFILE."
 
 install -m 0640 -o root -g adm /dev/null "$LOGFILE"
 exec 3>&1
@@ -175,21 +175,18 @@ exec >>"$LOGFILE" 2>&1
 
 
   # First logs added
-info ""
 info "================================================="
 info "===                                           ==="
 info "===    Installation of the Mesh Radio v1.0.   ==="
 info "===                                           ==="
 info "================================================="
-info ""
-info ""
 
   # Add system info
-info "Summary: OS=${RPI_OS_PRETTY_NAME:-$(. /etc/os-release; echo $PRETTY_NAME)}, Kernel=$(uname -r))"
+info "Summary: OS=${RPI_OS_PRETTY_NAME:-$(. /etc/os-release; echo $PRETTY_NAME)}, Kernel=$(uname -r)"
 
   #add some info that before did not got logged,
-info "Log file is created."
-info "location: $LOGFILE"
+info "Log file created."
+info "Log file location: $LOGFILE"
 
 info "Detected operating system: ${RPI_OS_PRETTY_NAME:-unknown}."
 
@@ -200,7 +197,7 @@ info "Confirmed running as root."
   # === Housekeeping
 info "Housekeeping starting."
 
-  # Perform a small cleanup in the user’s home directory
+  # Perform a small cleanup in the user's home directory
 TARGET_USER=${SUDO_USER:-$USER}
 TARGET_HOME=$(getent passwd "$TARGET_USER" | cut -d: -f6)
 TARGET_GROUP=$(id -gn "$TARGET_USER" 2>/dev/null || echo "$TARGET_USER")
@@ -214,20 +211,20 @@ info "Housekeeping is complete."
 
 
   # === System update
-info "Upgrade and Update of the operatingsystem starting."
+info "Starting operating system update and upgrade."
 
 apt-get update -y
 apt-get -o Dpkg::Options::="--force-confdef" \
         -o Dpkg::Options::="--force-confold" \
         dist-upgrade -y
 
-info "Update and Upgrade of the operatingsystem is complete."
+info "Operating system update and upgrade complete."
 
 sleep 5
 
 
 # === Prerequisites - install needed packages ===================================
-  # === Pakages list
+  # === Packages list
 PACKAGES=(
   nano
   python3
@@ -240,7 +237,7 @@ PACKAGES=(
   nftables
 )
 
-info "Package install starting."
+info "Starting package installation."
 
   # === Automate install (faster)
 if apt-get install -y --no-install-recommends "${PACKAGES[@]}"; then
@@ -270,14 +267,14 @@ fi
   # === Update the system with the install of all new packages
 apt-get update -y
 
-info "Installation of all packages is complete."
+info "Package installation complete."
 
 sleep 5
 
 # === Mesh ============================================================
 info "Creating mesh network."
 
-# ---- Interactieve defaults ------------------------------------------------------
+# ---- Interactive defaults -------------------------------------------------------
 prompt_with_default() {
   local __var_name="$1" __prompt="$2" __default="$3" __value
   local __current_value="${!__var_name:-}"
@@ -318,9 +315,9 @@ prompt_with_default MESH_ID "Mesh ID" "MYMESH"
 prompt_with_default IFACE "Wireless interface" "wlan1"
 prompt_with_default IP_CIDR "Node IP/CIDR on bat0" "192.168.0.1/24"
 prompt_with_default COUNTRY "Country code (regdom)" "BE"
-prompt_with_default FREQ "Frequency (MHz for 5GHz, of 2412/2437/2462 etc.)" "5180"
+prompt_with_default FREQ "Frequency (MHz for 5GHz, or 2412/2437/2462 etc.)" "5180"
 prompt_with_default BANDWIDTH "Bandwidth" "HT20"
-prompt_with_default MTU "MTU voor bat0" "1468"
+prompt_with_default MTU "MTU for bat0" "1468"
 prompt_with_default BSSID "IBSS fallback BSSID" "02:12:34:56:78:9A"
 
 
@@ -349,7 +346,7 @@ mesh_up() {
   . /etc/default/mesh.conf
   modprobe batman-adv
   iw reg set "$COUNTRY" || true
-  # Desingage NetworkManager
+  # Disengage NetworkManager
   command -v nmcli >/dev/null 2>&1 && nmcli dev set "$IFACE" managed no || true
 
   ip link set "$IFACE" down || true
@@ -358,7 +355,7 @@ mesh_up() {
     ip link set "$IFACE" up
     iw dev "$IFACE" mesh join "$MESH_ID" freq "$FREQ" "$BANDWIDTH"
   else
-    # IBSS fallback. Huil maar niet.
+    # IBSS fallback. Try not to worry.
     iw dev "$IFACE" set type ibss
     ip link set "$IFACE" up
     iw dev "$IFACE" ibss join "$MESH_ID" "$FREQ" "$BANDWIDTH" fixed-freq "$BSSID"
@@ -516,7 +513,7 @@ systemctl daemon-reload
 systemctl enable rnsd
 systemctl start rnsd
 
-info "Reticulum installed"
+info "Reticulum installed."
 
 
 # === Firewall (nftables) =====================================================
@@ -572,68 +569,68 @@ sleep 5
 # === Access Point setup =======================================================
     # === Create AP on wlan0
 
-info "Instalking access point on wlan0 (AP)"
+info "Installing access point on wlan0 (AP)."
 
 SSID_D="MyPiAP"
 PSK_D="SuperSecret123"
-CHAN_D="6"      # 1,6,11 zijn veiligst
+CHAN_D="6"      # 1,6,11 are the safest choices
 CTRY_D="BE"
 
 SSID=""; PSK=""; CHANNEL=""; COUNTRY=""
 
-ask "SSID (naam van je Wi-Fi)" "$SSID_D" SSID
+ask "SSID (name of your Wi-Fi)" "$SSID_D" SSID
 
-# === WPA2 PSK validatie
+# === WPA2 PSK validation
 while :; do
-  ask_hidden "WPA2-wachtwoord (8–63 tekens)" "$PSK_D" PSK
-  (( ${#PSK}>=8 && ${#PSK}<=63 )) && break || echo "❌ Wachtwoord moet 8–63 tekens zijn. Probeer opnieuw."
+ask_hidden "WPA2 password (8-63 characters)" "$PSK_D" PSK
+  (( ${#PSK}>=8 && ${#PSK}<=63 )) && break || echo "[ERROR] Password must be 8-63 characters. Please try again."
 done
 
-echo "Kies 2.4 GHz kanaal (1/6/11 zijn verstandig; 12/13 = iPhone-blind)."
-ask "Kanaal (1, 6 of 11)" "$CHAN_D" CHANNEL
+echo "Select a 2.4 GHz channel (1/6/11 are recommended; 12/13 are often unsupported by iPhones)."
+ask "Channel (1, 6, or 11)" "$CHAN_D" CHANNEL
 while ! [[ "$CHANNEL" =~ ^(1|6|11)$ ]]; do
-  echo "❌ Ongeldig kanaal. Kies 1, 6 of 11."
-  ask "Kanaal (1, 6 of 11)" "$CHAN_D" CHANNEL
+  echo "[ERROR] Invalid channel. Choose 1, 6, or 11."
+  ask "Channel (1, 6, or 11)" "$CHAN_D" CHANNEL
 done
 
-ask "Wi-Fi landcode (REGDOM, bv. BE/NL/DE)" "$CTRY_D" COUNTRY
+ask "Wi-Fi country code (REGDOM, e.g., BE/NL/DE)" "$CTRY_D" COUNTRY
 COUNTRY=$(echo "$COUNTRY" | tr '[:lower:]' '[:upper:]')
-[[ "$COUNTRY" =~ ^[A-Z]{2}$ ]] || { echo "⚠️ Landcode onhandig. Gebruik '$CTRY_D'."; COUNTRY="$CTRY_D"; }
+[[ "$COUNTRY" =~ ^[A-Z]{2}$ ]] || { echo "[WARNING] Unrecognized country code. Using '$CTRY_D'."; COUNTRY="$CTRY_D"; }
 
 echo
-echo "Samenvatting:"
+echo "Summary:"
 echo "  SSID     : $SSID"
-echo "  WPA2 PSK : (verborgen — verrassing)"
-echo "  Kanaal   : $CHANNEL"
-echo "  Landcode : $COUNTRY"
+echo "  WPA2 PSK : (hidden for security)"
+echo "  Channel   : $CHANNEL"
+echo "  Country code : $COUNTRY"
 echo
 
 CLEAN=true
-confirm "Alle bestaande Wi-Fi-profielen opruimen vóór we beginnen?" || CLEAN=false
+confirm "Remove all existing Wi-Fi profiles before continuing?" || CLEAN=false
 echo
-confirm "Doorgaan en AP configureren?" || die "Afgebroken. Commitment is moeilijk, snap ik."
+confirm "Proceed with access point configuration?" || die "Operation cancelled by user."
 
-# 1) Landcode persistent + runtime
-log "Landcode instellen op ${COUNTRY}…"
+# 1) Persist and apply country code
+log "Setting country code to ${COUNTRY}..."
 if command -v raspi-config >/dev/null 2>&1; then
   raspi-config nonint do_wifi_country "${COUNTRY}" || true
 fi
 iw reg set "${COUNTRY}" || true
-  # === Zet country= ook in wpa_supplicant (consistentie)
+  # === Ensure wpa_supplicant also includes the country code for consistency
 if [[ -f /etc/wpa_supplicant/wpa_supplicant.conf ]]; then
   grep -q "^country=${COUNTRY}\b" /etc/wpa_supplicant/wpa_supplicant.conf 2>/dev/null || \
     sed -i "1i country=${COUNTRY}" /etc/wpa_supplicant/wpa_supplicant.conf || true
 fi
 
-# === Driver herladen (reset chanspec/PMF capriolen)
-log "Broadcom/CFG80211 driver herladen…"
+# === Reload drivers (reset channel specifications/PMF quirks)
+log "Reloading Broadcom/CFG80211 drivers..."
 modprobe -r brcmfmac brcmutil cfg80211 2>/dev/null || true
 modprobe cfg80211
 modprobe brcmutil 2>/dev/null || true
 modprobe brcmfmac  2>/dev/null || true
 
-# 3) rfkill/Radio & powersave uit
-log "Wi-Fi radio aan en powersave uit…"
+# 3) Disable rfkill/radio blocks and Wi-Fi power save
+log "Enabling Wi-Fi radio and disabling power save..."
 rfkill unblock all || true
 nmcli radio wifi on
 mkdir -p /etc/NetworkManager/conf.d
@@ -642,25 +639,25 @@ cat >/etc/NetworkManager/conf.d/wifi-powersave-off.conf <<'EOF'
 wifi.powersave=2
 EOF
 
-# 4) NetworkManager herstarten
-log "NetworkManager herstarten…"
+# 4) Restart NetworkManager
+log "Restarting NetworkManager..."
 systemctl restart NetworkManager
 sleep 2
 
-# 5) Opruimen
+# 5) Clean up
 if $CLEAN; then
-  log "Profielen opruimen (alle 802-11-wireless)…"
+  log "Removing existing Wi-Fi profiles..."
   nmcli device disconnect wlan0 || true
   while read -r NAME; do
     [[ -n "$NAME" ]] && nmcli connection delete "$NAME" || true
   done < <(nmcli -t -f NAME,TYPE connection show | awk -F: '$2=="802-11-wireless"{print $1}')
 else
-  log "Profielen blijven staan; we disconnecten wlan0 in elk geval."
+  log "Leaving existing profiles in place; disconnecting wlan0 regardless."
   nmcli device disconnect wlan0 || true
 fi
 
-# 6) AP-profiel maken
-log "AP-profiel maken: SSID='${SSID}', kanaal=${CHANNEL}, WPA2…"
+# 6) Create AP profile
+log "Creating AP profile: SSID='${SSID}', channel=${CHANNEL}, WPA2..."
 nmcli -t -f NAME connection show | grep -Fxq "$SSID" && nmcli connection delete "$SSID" || true
 nmcli connection add type wifi ifname wlan0 con-name "${SSID}" ssid "${SSID}"
 
@@ -676,21 +673,21 @@ nmcli connection modify "${SSID}" \
   connection.autoconnect yes \
   wifi.cloned-mac-address permanent
 
-# 6b) Kanaalbreedte 20 MHz (verschillende NM builds: probeer beide varianten)
+# 6b) Channel width 20 MHz (different NM builds: try both variants)
 nmcli connection modify "${SSID}" 802-11-wireless.channel-width 20mhz 2>/dev/null || \
 nmcli connection modify "${SSID}" 802-11-wireless.channel-width ht20 2>/dev/null || true
 
-# 6c) iOS-vriendelijk + PMF uit (802.11w verplicht breekt op Broadcom)
+# 6c) iOS-friendly + disable PMF (mandatory 802.11w breaks on Broadcom)
 nmcli connection modify "${SSID}" +wifi-sec.proto rsn       || true
 nmcli connection modify "${SSID}" +wifi-sec.group ccmp      || true
 nmcli connection modify "${SSID}" +wifi-sec.pairwise ccmp   || true
 nmcli connection modify "${SSID}" 802-11-wireless-security.pmf 0 2>/dev/null || \
 nmcli connection modify "${SSID}" wifi-sec.pmf 0 2>/dev/null || true
 
-# 7) Start AP met fallback-kanalen (1/6/11, want Broadcom houdt van keuzes)
+# 7) Start AP with fallback channels (1/6/11 provide reliable options)
 start_ap() {
   local ch="$1"
-  log "AP starten op kanaal ${ch}…"
+  log "Starting AP on channel ${ch}..."
   nmcli connection modify "${SSID}" 802-11-wireless.channel "${ch}" || true
   nmcli connection up "${SSID}"
 }
@@ -699,7 +696,7 @@ set +e
 start_ap "${CHANNEL}"
 RC=$?
 if [ $RC -ne 0 ]; then
-  log "Start faalde. Fallback proberen op 1/6/11…"
+  log "Start failed. Attempting fallback on channels 1/6/11..."
   for ch in 1 6 11; do
     [[ "$ch" == "$CHANNEL" ]] && continue
     start_ap "$ch"; RC=$?
@@ -714,33 +711,33 @@ IP4="$(ip -4 addr show dev wlan0 | awk '/inet /{print $2}')"
 echo
 
 if nmcli -t -f GENERAL.STATE connection show "${SSID}" >/dev/null 2>&1; then
-  echo "✅ Klaar. SSID: ${SSID}"
-  echo "   WPA2-wachtwoord: (ja, nog steeds verborgen — omdat het kan)"
-  echo "   Kanaal: ${CHANNEL}"
-  echo "   Pi-adres op wlan0: ${IP4:-(nog geen IPv4 gezien)}"
+  echo "[OK] Completed. SSID: ${SSID}"
+  echo "   WPA2 password: (still hidden for security)"
+  echo "   Channel: ${CHANNEL}"
+  echo "   Device IP on wlan0: ${IP4:-(no IPv4 address detected yet)}"
   echo
-  echo "Tips:"
-  echo "  • Kanaal wisselen: nmcli con mod \"${SSID}\" 802-11-wireless.channel 1 && nmcli con up \"${SSID}\""
-  echo "  • SSID wijzigen : nmcli con mod \"${SSID}\" 802-11-wireless.ssid \"NieuwSSID\" && nmcli con up \"${SSID}\""
-  echo "  • Wachtwoord   : nmcli con mod \"${SSID}\" wifi-sec.psk \"NieuwWachtwoord\" && nmcli con up \"${SSID}\""
+  echo "Helpful commands:"
+  echo "  - Change channel: nmcli con mod \"${SSID}\" 802-11-wireless.channel 1 && nmcli con up \"${SSID}\""
+  echo "  - Update SSID   : nmcli con mod \"${SSID}\" 802-11-wireless.ssid \"NewSSID\" && nmcli con up \"${SSID}\""
+  echo "  - Update password: nmcli con mod \"${SSID}\" wifi-sec.psk \"NewPassword\" && nmcli con up \"${SSID}\""
 else
-  die "AP niet actief. Logs checken: 
+  die "Access point is not active. Check logs:
   - journalctl -u NetworkManager -b --no-pager | tail -n 200
   - dmesg | grep -i -E 'brcm|wlan0|cfg80211|ieee80211' | tail -n 200"
 fi
 
-info "Access point installed"
+info "Access point installed."
 
 sleep 5
 
 # === Setting up webserver =======================================================
-  # === Haal IP en subnet van wlan0 (AP moet al actief zijn)
+  # === Retrieve IP and subnet of wlan0 (AP must already be active)
 
-info "Installing webserver"
+info "Installing web server."
 
 WLAN_IP=$(ip -4 addr show wlan0 | awk '/inet /{print $2}' | cut -d/ -f1 | head -n1 || true)
 AP_SUBNET=$(ip -4 route show dev wlan0 | awk '/proto kernel/ {print $1}' | head -n1 || true)
-[[ -n "${WLAN_IP}" ]] || log "⚠️  Kon (nog) geen IP op wlan0 zien. Ga ervan uit dat NM het zo geeft."
+[[ -n "${WLAN_IP}" ]] || log "[WARNING] Could not detect an IP on wlan0 yet. Assuming NetworkManager will provide one shortly."
 
 FILES_DIR="/var/www/html/files"
 SITE_AVAIL="/etc/nginx/sites-available/fileserver"
@@ -748,16 +745,16 @@ SITE_ENABLED="/etc/nginx/sites-enabled/fileserver"
 DEFAULT_SITE="/etc/nginx/sites-enabled/default"
 OWNER_USER="${SUDO_USER:-pi}"
 
-log "Pakketjes installeren (nginx)…"
+log "Installing packages (nginx)..."
 apt-get update -y
 apt-get install -y nginx
 
-log "Mappen & rechten…"
+log "Creating directories and setting permissions..."
 mkdir -p "$FILES_DIR"
 chown -R "$OWNER_USER":www-data "$FILES_DIR"
 chmod -R 775 "$FILES_DIR"
 
-log "Nginx-config schrijven…"
+log "Writing Nginx configuration..."
 cat > "$SITE_AVAIL" <<'NGINXCONF'
 server {
     listen 80 default_server;
@@ -768,15 +765,15 @@ server {
     root /var/www/html;
     index index.html;
 
-    # Directory listing voor /files/
+    # Directory listing for /files/
     location /files/ {
         autoindex on;
         autoindex_exact_size off;
         autoindex_localtime on;
-        # eventueel rate limiting, headers, etc. hier
+        # add rate limiting, headers, etc. here if needed
     }
 
-    # Simpele landing page
+    # Simple landing page
     location = / {
         try_files $uri /index.html;
     }
@@ -787,35 +784,35 @@ NGINXCONF
 if [ ! -f /var/www/html/index.html ]; then
 cat > /var/www/html/index.html <<'HTML'
 <!doctype html>
-<html lang="nl"><head><meta charset="utf-8"><title>Pi Download Server</title></head>
+<html lang="en"><head><meta charset="utf-8"><title>Pi Download Server</title></head>
 <body>
-  <h1>Welkom op de Raspberry Pi downloadserver</h1>
-  <p>Bestanden: <a href="/files/">/files/</a></p>
+  <h1>Welcome to the Raspberry Pi download server</h1>
+  <p>Files: <a href="/files/">/files/</a></p>
 </body></html>
 HTML
 fi
 
-log "Site activeren…"
+log "Activating site configuration..."
 ln -sf "$SITE_AVAIL" "$SITE_ENABLED"
 [ -e "$DEFAULT_SITE" ] && rm -f "$DEFAULT_SITE"
 
-log "Config testen & herstarten…"
+log "Testing configuration and restarting Nginx..."
 nginx -t
 systemctl enable nginx
 systemctl restart nginx
 
 echo
-echo "✅ Klaar. Zet je bestanden in: $FILES_DIR"
-echo "   HTTP: http://${WLAN_IP:-<wlan0-IP>}/files/  (zodra wlan0 IP heeft)"
-echo "   AP-subnet: ${AP_SUBNET:-onbekend} (alleen ter info)"
+echo "[OK] Completed. Place your files in: $FILES_DIR"
+echo "   HTTP: http://${WLAN_IP:-<wlan0-IP>}/files/  (once wlan0 has an IP)"
+echo "   AP subnet: ${AP_SUBNET:-unknown} (for reference only)"
 
-info "Webserver installed"
+info "Web server installed."
 
 sleep 5
 
 
 # === Logrotate config ============================================================
-info "Logrotate config."
+info "Configuring log rotation."
 
 install -m 0644 -o root -g root /dev/null /etc/logrotate.d/mesh-install
 cat >/etc/logrotate.d/mesh-install <<'EOF'
@@ -830,16 +827,16 @@ cat >/etc/logrotate.d/mesh-install <<'EOF'
 }
 EOF
 
-info "Logrotate config done."
+info "Log rotation configuration complete."
 
 
 # === Clean up after installation is complete ====================================
-info "Clean up before end of script."
+info "Starting final cleanup."
 
 apt-get autoremove -y
 apt-get clean
 
-info "Clean up finished."
+info "Final cleanup complete."
 
 sleep 5
 
@@ -851,7 +848,7 @@ info "Installation complete."
 sleep 5
 
 # === Reboot prompt ==============================================================
-info "Reboot or not"
+info "Prompting for reboot."
 
 if confirm "Do you want to reboot the system?" "y"; then
   info "Initiating reboot."
