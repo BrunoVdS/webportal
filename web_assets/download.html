@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Pi Download Server</title>
+    <title>Download Center</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -12,8 +12,12 @@
       </button>
     </div>
     <main>
-      <h1>Welcome to the Raspberry Pi download server</h1>
-      <p>Files: <a href="download.html">Download files</a></p>
+      <h1>Download Center</h1>
+      <p>Select a resource below to access the available files.</p>
+      <ul class="download-links">
+        <li><a href="/files/">Open the /files/ directory</a></li>
+      </ul>
+      <p class="back-link"><a href="index.html">Back to the home page</a></p>
     </main>
 
     <?php include __DIR__ . '/footer.php'; ?>

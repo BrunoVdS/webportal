@@ -6,6 +6,7 @@
   --link-color: #2563eb;
   --toggle-background: rgba(15, 23, 42, 0.1);
   --toggle-text: #0f172a;
+  --footer-background: rgba(15, 23, 42, 0.04);
 }
 
 body {
@@ -13,11 +14,14 @@ body {
   margin: 0;
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: var(--background);
   color: var(--text-color);
   transition: background 0.3s ease, color 0.3s ease;
+  padding: 4rem 1rem 5rem;
+  box-sizing: border-box;
 }
 
 body.night-vision {
@@ -27,6 +31,7 @@ body.night-vision {
   --link-color: #000;
   --toggle-background: rgba(0, 0, 0, 0.1);
   --toggle-text: #000;
+  --footer-background: rgba(255, 255, 255, 0.2);
 }
 
 main {
@@ -37,6 +42,8 @@ main {
   max-width: 32rem;
   text-align: center;
   backdrop-filter: blur(6px);
+  flex: 0 0 auto;
+  margin-bottom: 2rem;
 }
 
 h1 {
@@ -80,4 +87,59 @@ a:focus {
 
 body.night-vision main {
   box-shadow: none;
+}
+
+.download-links {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 2rem;
+}
+
+.download-links li {
+  margin-bottom: 1rem;
+}
+
+.back-link a {
+  font-weight: 500;
+}
+
+.site-footer {
+  width: 100%;
+  background: var(--footer-background);
+  margin-top: auto;
+  padding: 1rem 0;
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+}
+
+.footer-logo {
+  height: 36px;
+  width: auto;
+}
+
+@media (max-width: 480px) {
+  main {
+    padding: 2rem;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .footer-logo {
+    height: 28px;
+  }
 }
