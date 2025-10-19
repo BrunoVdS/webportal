@@ -236,6 +236,7 @@ PACKAGES=(
   iw
   iproute2
   wireless-regdb
+  nftables
 )
 
 info "Package install starting."
@@ -552,6 +553,55 @@ systemctl enable rnsd
 systemctl start rnsd
 
 info "Reticulum installed"
+
+
+# === Firewall (nftables) =====================================================
+info "Configuring nftables firewall."
+
+NFTABLES_CONF="/etc/nftables.conf"
+if [ -f "$NFTABLES_CONF" ]; then
+  backup="$NFTABLES_CONF.$(date +%s).bak"
+  cp "$NFTABLES_CONF" "$backup"
+  info "Existing nftables config backed up to $backup"
+fi
+
+cat <<'EOF' >"$NFTABLES_CONF"
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+  chain input {
+    type filter hook input priority 0;
+    policy drop;
+
+    iif lo accept
+    ct state established,related accept
+    iifname "wlan0" tcp dport {22,80,443} accept
+    iifname "bat0" tcp dport 4242 accept
+    iifname "bat0" udp dport 4960 accept
+  }
+
+  chain forward {
+    type filter hook forward priority 0;
+    policy drop;
+
+    iifname "wlan0" oifname "bat0" drop
+    iifname "bat0" oifname "wlan0" drop
+  }
+
+  chain output {
+    type filter hook output priority 0;
+    policy accept;
+  }
+}
+EOF
+
+chmod 0644 "$NFTABLES_CONF"
+nft -f "$NFTABLES_CONF"
+systemctl enable --now nftables
+
+info "nftables firewall configured and enabled."
 
 
 # === Access Point setup =======================================================
