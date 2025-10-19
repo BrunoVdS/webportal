@@ -232,6 +232,7 @@ PACKAGES=(
   nano
   python3
   python3-pip
+  python3-venv
   batctl
   iw
   iproute2
@@ -470,70 +471,32 @@ sleep 5
 # === Reticulum ============================================================
 info "Installing Reticulum."
 
-pip3 install --upgrade rns --break-system-packages
+RNS_VENV_DIR="/opt/reticulum-venv"
 
-bashrc="$TARGET_HOME/.bashrc"
-touch "$bashrc"
-if ! grep -Fxq 'export PATH="$PATH:$HOME/.local/bin"' "$bashrc" 2>/dev/null; then
-  printf '%s\n' 'export PATH="$PATH:$HOME/.local/bin"' >>"$bashrc"
-  info "Added ~/.local/bin to PATH in $bashrc"
+if [ ! -d "$RNS_VENV_DIR" ]; then
+  python3 -m venv "$RNS_VENV_DIR"
+  info "Created virtual environment in $RNS_VENV_DIR"
+else
+  info "Using existing virtual environment in $RNS_VENV_DIR"
 fi
 
-# shellcheck disable=SC1090
-. "$bashrc" || true
+"$RNS_VENV_DIR/bin/pip" install --upgrade pip wheel
+"$RNS_VENV_DIR/bin/pip" install --upgrade rns
 
-if ! command -v rnsd >/dev/null 2>&1; then
-  warn "rnsd not found in PATH; attempting to locate binary."
-  RN_PATH=$(python3 - <<'PY' 2>/dev/null || true
-from pathlib import Path
-import sysconfig
-
-def candidate_dirs():
-    seen = set()
-    schemes = [sysconfig.get_default_scheme()]
-    schemes.extend(["posix_prefix", "posix_local", "posix_user"])
-    for scheme in schemes:
-        try:
-            path = sysconfig.get_path("scripts", scheme)
-        except (KeyError, ValueError):
-            continue
-        if not path:
-            continue
-        resolved = Path(path).expanduser()
-        if resolved in seen:
-            continue
-        seen.add(resolved)
-        yield resolved
-
-    extras = [Path("/usr/local/bin"), Path("/usr/bin"), Path.home() / ".local/bin"]
-    for extra in extras:
-        if extra in seen:
-            continue
-        seen.add(extra)
-        yield extra
-
-
-for directory in candidate_dirs():
-    candidate = directory / "rnsd"
-    try:
-        if candidate.is_file():
-            print(candidate)
-            break
-    except OSError:
-        continue
-PY
-  )
-  RN_PATH=${RN_PATH//$'\n'/}
-  if [[ -n "$RN_PATH" && -e "$RN_PATH" ]]; then
-    if ln -sf "$RN_PATH" /usr/local/bin/rnsd; then
-      info "Created symlink for rnsd at /usr/local/bin/rnsd"
-    else
-      warn "Failed to create rnsd symlink from $RN_PATH"
-    fi
-  else
-    warn "Could not locate rnsd binary automatically."
+nullglob_original=$(shopt -p nullglob || true)
+shopt -s nullglob
+for tool in "$RNS_VENV_DIR"/bin/rn*; do
+  if [ -f "$tool" ] && [ -x "$tool" ]; then
+    ln -sf "$tool" "/usr/local/bin/$(basename "$tool")"
   fi
+done
+if [ -n "$nullglob_original" ]; then
+  eval "$nullglob_original"
+else
+  shopt -u nullglob
 fi
+
+info "Reticulum installed in isolated virtual environment."
 
 info "Create Systemd service (automated startup)"
 tee /etc/systemd/system/rnsd.service > /dev/null <<EOF
