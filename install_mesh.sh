@@ -465,6 +465,7 @@ systemctl enable --now mesh.service
 
 info "Mesh setup done. Gebruik 'meshctl status' voor je daily dosis realiteit."
 
+sleep 5
 
 # === Reticulum ============================================================
 info "Installing Reticulum."
@@ -603,9 +604,12 @@ systemctl enable --now nftables
 
 info "nftables firewall configured and enabled."
 
+sleep 5
 
 # === Access Point setup =======================================================
-echo "=== Raspberry Pi Access Point (wlan0) Setup — Interactieve modus ==="
+    # === Create AP on wlan0
+
+info "Instalking access point on wlan0 (AP)"
 
 SSID_D="MyPiAP"
 PSK_D="SuperSecret123"
@@ -762,9 +766,15 @@ else
   - dmesg | grep -i -E 'brcm|wlan0|cfg80211|ieee80211' | tail -n 200"
 fi
 
+info "Access point installed"
+
+sleep 5
 
 # === Setting up webserver =======================================================
   # === Haal IP en subnet van wlan0 (AP moet al actief zijn)
+
+info "Installing webserver"
+
 WLAN_IP=$(ip -4 addr show wlan0 | awk '/inet /{print $2}' | cut -d/ -f1 | head -n1 || true)
 AP_SUBNET=$(ip -4 route show dev wlan0 | awk '/proto kernel/ {print $1}' | head -n1 || true)
 [[ -n "${WLAN_IP}" ]] || log "⚠️  Kon (nog) geen IP op wlan0 zien. Ga ervan uit dat NM het zo geeft."
@@ -835,6 +845,10 @@ echo
 echo "✅ Klaar. Zet je bestanden in: $FILES_DIR"
 echo "   HTTP: http://${WLAN_IP:-<wlan0-IP>}/files/  (zodra wlan0 IP heeft)"
 echo "   AP-subnet: ${AP_SUBNET:-onbekend} (alleen ter info)"
+
+info "Webserver installed"
+
+sleep 5
 
 
 # === Logrotate config ============================================================
