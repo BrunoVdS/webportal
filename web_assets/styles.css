@@ -19,7 +19,7 @@ body {
   background: var(--background);
   color: var(--text-color);
   transition: background 0.3s ease, color 0.3s ease;
-  padding: 4rem 1rem 5rem;
+  padding: clamp(3rem, 6vw, 4.5rem) clamp(1rem, 4vw, 2.5rem) clamp(4.5rem, 8vw, 6rem);
   box-sizing: border-box;
 }
 
@@ -35,22 +35,22 @@ body {
 }
 
 body.night-vision {
-  --background: rgb(165, 1, 2);
-  --text-color: #000;
-  --card-background: rgba(255, 255, 255, 0.1);
-  --link-color: #000;
-  --toggle-background: rgba(0, 0, 0, 0.1);
-  --toggle-text: #000;
-  --footer-background: rgba(255, 255, 255, 0.2);
+  --background: radial-gradient(circle at 20% 20%, #4d1518, #150304 70%);
+  --text-color: #fef3f2;
+  --card-background: rgba(17, 6, 6, 0.85);
+  --link-color: #fbbf24;
+  --toggle-background: rgba(254, 243, 242, 0.12);
+  --toggle-text: #fef3f2;
+  --footer-background: rgba(254, 243, 242, 0.1);
 }
 
 main {
   background-color: var(--card-background);
-  padding: 2.5rem 3rem;
+  padding: clamp(2rem, 4vw, 3rem) clamp(2rem, 5vw, 3.5rem);
   border-radius: 1rem;
   box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15);
-  width: min(100%, 32rem);
-  margin: 0 auto 2rem;
+  width: min(100%, 36rem);
+  margin: 0 auto 2.5rem;
   text-align: center;
   backdrop-filter: blur(6px);
   flex: 0 0 auto;
@@ -96,6 +96,10 @@ a:focus {
   background: var(--toggle-background);
   cursor: pointer;
   transition: transform 0.2s ease, background 0.2s ease;
+}
+
+body.night-vision .menu-toggle {
+  border-color: rgba(254, 243, 242, 0.25);
 }
 
 .site-menu.js-ready .menu-toggle {
@@ -195,6 +199,10 @@ a:focus {
   transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
+body.night-vision .theme-toggle button {
+  border-color: rgba(254, 243, 242, 0.25);
+}
+
 .theme-toggle button:hover,
 .theme-toggle button:focus {
   transform: translateY(-1px);
@@ -202,7 +210,7 @@ a:focus {
 }
 
 body.night-vision main {
-  box-shadow: none;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.45);
 }
 
 .download-links {
@@ -261,5 +269,30 @@ body.night-vision main {
   .footer-logo {
     width: clamp(160px, 60%, 220px);
     margin-inline: auto;
+  }
+}
+
+@media (min-width: 600px) {
+  main {
+    width: min(100%, 40rem);
+  }
+
+  .footer-content {
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 900px) {
+  body {
+    padding: clamp(4rem, 8vw, 7rem) clamp(2.5rem, 8vw, 5rem) clamp(5.5rem, 10vw, 8rem);
+  }
+
+  main {
+    width: min(100%, 44rem);
+  }
+
+  .footer-content {
+    justify-content: space-between;
+    font-size: 0.8rem;
   }
 }
