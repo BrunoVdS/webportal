@@ -4,6 +4,7 @@ Node komes online when the node boots/reboots.
 
 # Reticulum installation
 The installation script provisions Reticulum inside an isolated virtual environment located at `/opt/reticulum-venv` and exposes the `rn*` command-line tools via symlinks in `/usr/local/bin`. This avoids modifying system Python packages while keeping the utilities globally accessible.
+config file is located /.reticulum
 
 # Access point (AP on wlan0)
 Building access point on erry Pi's wifi(wlan0).
