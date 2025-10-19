@@ -739,7 +739,9 @@ WLAN_IP=$(ip -4 addr show wlan0 | awk '/inet /{print $2}' | cut -d/ -f1 | head -
 AP_SUBNET=$(ip -4 route show dev wlan0 | awk '/proto kernel/ {print $1}' | head -n1 || true)
 [[ -n "${WLAN_IP}" ]] || log "[WARNING] Could not detect an IP on wlan0 yet. Assuming NetworkManager will provide one shortly."
 
-FILES_DIR="/var/www/html/files"
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+WEB_ROOT="/var/www/server"
+FILES_DIR="$WEB_ROOT/files"
 SITE_AVAIL="/etc/nginx/sites-available/fileserver"
 SITE_ENABLED="/etc/nginx/sites-enabled/fileserver"
 DEFAULT_SITE="/etc/nginx/sites-enabled/default"
@@ -750,8 +752,9 @@ apt-get update -y
 apt-get install -y nginx
 
 log "Creating directories and setting permissions..."
+mkdir -p "$WEB_ROOT"
 mkdir -p "$FILES_DIR"
-chown -R "$OWNER_USER":www-data "$FILES_DIR"
+chown -R "$OWNER_USER":www-data "$WEB_ROOT"
 chmod -R 775 "$FILES_DIR"
 
 log "Writing Nginx configuration..."
@@ -762,7 +765,7 @@ server {
 
     server_name _;
 
-    root /var/www/html;
+    root /var/www/server;
     index index.html;
 
     # Directory listing for /files/
@@ -780,16 +783,14 @@ server {
 }
 NGINXCONF
 
-  # === Landing page
-if [ ! -f /var/www/html/index.html ]; then
-cat > /var/www/html/index.html <<'HTML'
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Pi Download Server</title></head>
-<body>
-  <h1>Welcome to the Raspberry Pi download server</h1>
-  <p>Files: <a href="/files/">/files/</a></p>
-</body></html>
-HTML
+ASSETS_DIR="$SCRIPT_DIR/web_assets"
+if [ -d "$ASSETS_DIR" ]; then
+  if [ ! -f "$WEB_ROOT/index.html" ] && [ -f "$ASSETS_DIR/index.html" ]; then
+    install -m 0644 "$ASSETS_DIR/index.html" "$WEB_ROOT/index.html"
+  fi
+  if [ ! -f "$WEB_ROOT/styles.css" ] && [ -f "$ASSETS_DIR/styles.css" ]; then
+    install -m 0644 "$ASSETS_DIR/styles.css" "$WEB_ROOT/styles.css"
+  fi
 fi
 
 log "Activating site configuration..."
