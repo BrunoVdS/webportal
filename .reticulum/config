@@ -92,24 +92,15 @@
   # local IPv6 is enabled in your operating system, which
   # should be enabled by default in almost any OS. See
   # the Reticulum Manual for more configuration options.
-  
-  [[Default Interface]]
-    type = AutoInterface
+
+  [[BTA Mesh]]
+    type = UDPInterface
+    interface = bat0
+    listen_port = 4960
     enabled = Yes
 
-  # Bind Reticulum directly to the batman-adv mesh interface created by the
-  # install_mesh.sh script. When meshctl brings up the mesh, it creates the
-  # bat0 interface and assigns the mesh subnet address. Reticulum will then use
-  # IPv6 link-local discovery on bat0 to talk to other Reticulum nodes that are
-  # also connected to the mesh.
-  [[Mesh BATMAN Interface]]
-    type = AutoInterface
-    interface_enabled = Yes
-    ifacename = bat0
-    group = mesh
-
-  [[TCP Server Interface]]
+  [[Mesh TCP Gateway]]
     type = TCPServerInterface
-    interface_enabled = True
-    listen_ip = 0.0.0.0  # Listen on all interfaces
-    listen_port = 4242   # Choose any port you like
+    listen_ip = 0.0.0.0 #via security build in via nftables
+    listen_port = 4242
+    enabled = Yes
