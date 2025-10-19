@@ -86,7 +86,7 @@ a:focus {
 }
 
 .menu-toggle {
-  display: inline-flex;
+  display: none;
   align-items: center;
   justify-content: center;
   width: 2.5rem;
@@ -98,10 +98,20 @@ a:focus {
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
-.menu-toggle:focus,
+.site-menu.js-ready .menu-toggle {
+  display: inline-flex;
+}
+
 .menu-toggle:hover {
-  outline: none;
   transform: translateY(-1px);
+}
+
+.menu-toggle:focus,
+.menu-toggle:focus-visible {
+  transform: translateY(-1px);
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.35);
 }
 
 .menu-icon {
@@ -131,19 +141,26 @@ a:focus {
 }
 
 .menu-drawer {
-  display: none;
-  position: absolute;
-  top: calc(100% + 0.75rem);
-  left: 0;
+  display: block;
+  margin-top: 0.75rem;
   background: var(--card-background);
   border-radius: 0.75rem;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+  box-shadow: none;
   padding: 1rem 1.25rem;
   min-width: 12rem;
   backdrop-filter: blur(6px);
 }
 
-.menu-open .menu-drawer {
+.site-menu.js-ready .menu-drawer {
+  display: none;
+  margin-top: 0;
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  left: 0;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+}
+
+.site-menu.js-ready.menu-open .menu-drawer {
   display: block;
 }
 

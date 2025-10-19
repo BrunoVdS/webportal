@@ -15,33 +15,3 @@
     </ul>
   </div>
 </nav>
-<script>
-  (function () {
-    const nav = document.querySelector('.site-menu');
-    const toggle = nav === null ? null : nav.querySelector('.menu-toggle');
-    if (!nav || !toggle) {
-      return;
-    }
-
-    toggle.addEventListener('click', function () {
-      const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-      toggle.setAttribute('aria-expanded', String(!isExpanded));
-      nav.classList.toggle('menu-open', !isExpanded);
-    });
-
-    nav.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && nav.classList.contains('menu-open')) {
-        toggle.setAttribute('aria-expanded', 'false');
-        nav.classList.remove('menu-open');
-        toggle.focus();
-      }
-    });
-
-    document.addEventListener('click', function (event) {
-      if (!nav.contains(event.target)) {
-        toggle.setAttribute('aria-expanded', 'false');
-        nav.classList.remove('menu-open');
-      }
-    });
-  })();
-</script>
