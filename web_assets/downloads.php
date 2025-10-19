@@ -19,7 +19,7 @@
       <ul class="download-links">
         <li><a href="/files/">Open the /files/ directory</a></li>
       </ul>
-      <p class="back-link"><a href="index.html">Back to the home page</a></p>
+      <p class="back-link"><a href="index.php">Back to the home page</a></p>
     </main>
 
     <?php include __DIR__ . '/php/footer.php'; ?>

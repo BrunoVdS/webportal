@@ -9,9 +9,9 @@
   </button>
   <div class="menu-drawer" id="site-menu-drawer">
     <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="downloads.html">Downloads</a></li>
-      <li><a href="mesh.html">Mesh</a></li>
+      <li><a href="index.php">Home</a></li>
+      <li><a href="downloads.php">Downloads</a></li>
+      <li><a href="mesh.php">Mesh</a></li>
     </ul>
   </div>
 </nav>

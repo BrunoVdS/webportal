@@ -15,7 +15,7 @@
     <?php include __DIR__ . '/php/theme-toggle.php'; ?>
     <main>
       <h1>Welcome to the Raspberry Pi download server</h1>
-      <p>Files: <a href="downloads.html">Download files</a></p>
+        <p>Files: <a href="downloads.php">Download files</a></p>
     </main>
 
     <?php include __DIR__ . '/php/footer.php'; ?>
