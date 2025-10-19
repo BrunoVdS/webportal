@@ -49,7 +49,7 @@ main {
   padding: 2.5rem 3rem;
   border-radius: 1rem;
   box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15);
-  width: min(100%, 32rem);
+  width: min(100%, 72rem);
   margin: 0 auto 2rem;
   text-align: center;
   backdrop-filter: blur(6px);
@@ -205,14 +205,92 @@ body.night-vision main {
   box-shadow: none;
 }
 
-.download-links {
-  list-style: none;
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0 2.5rem;
   padding: 0;
-  margin: 1.5rem 0 2rem;
 }
 
-.download-links li {
-  margin-bottom: 1rem;
+.download-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 0.9rem;
+  padding: 1.75rem 1.5rem;
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
+}
+
+body.night-vision .download-card {
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: none;
+}
+
+.download-card:hover,
+.download-card:focus-within {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+}
+
+.download-card__logo {
+  width: clamp(60px, 25%, 96px);
+  height: auto;
+}
+
+.download-card__title {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.download-card__description {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(15, 23, 42, 0.75);
+}
+
+body.night-vision .download-card__description {
+  color: #000;
+}
+
+.download-card__button,
+.download-card__placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.download-card__button {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
+}
+
+.download-card__button:hover,
+.download-card__button:focus {
+  transform: translateY(-2px);
+  background: #1d4ed8;
+  text-decoration: none;
+}
+
+.download-card__placeholder {
+  background: rgba(15, 23, 42, 0.12);
+  color: rgba(15, 23, 42, 0.7);
+}
+
+body.night-vision .download-card__placeholder {
+  background: rgba(0, 0, 0, 0.2);
+  color: #000;
 }
 
 .back-link a {
