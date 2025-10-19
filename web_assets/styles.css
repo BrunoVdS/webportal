@@ -1,5 +1,11 @@
 :root {
   color-scheme: light dark;
+  --background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  --text-color: #0f172a;
+  --card-background: rgba(255, 255, 255, 0.85);
+  --link-color: #2563eb;
+  --toggle-background: rgba(15, 23, 42, 0.1);
+  --toggle-text: #0f172a;
 }
 
 body {
@@ -9,17 +15,28 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-  color: #0f172a;
+  background: var(--background);
+  color: var(--text-color);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+body.night-vision {
+  --background: rgb(165, 1, 2);
+  --text-color: #000;
+  --card-background: rgba(255, 255, 255, 0.1);
+  --link-color: #000;
+  --toggle-background: rgba(0, 0, 0, 0.1);
+  --toggle-text: #000;
 }
 
 main {
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: var(--card-background);
   padding: 2.5rem 3rem;
   border-radius: 1rem;
   box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15);
   max-width: 32rem;
   text-align: center;
+  backdrop-filter: blur(6px);
 }
 
 h1 {
@@ -28,7 +45,7 @@ h1 {
 }
 
 a {
-  color: #2563eb;
+  color: var(--link-color);
   font-weight: 600;
   text-decoration: none;
 }
@@ -36,4 +53,31 @@ a {
 a:hover,
 a:focus {
   text-decoration: underline;
+}
+
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+}
+
+.theme-toggle button {
+  background: var(--toggle-background);
+  color: var(--toggle-text);
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.theme-toggle button:hover,
+.theme-toggle button:focus {
+  transform: translateY(-1px);
+  outline: none;
+}
+
+body.night-vision main {
+  box-shadow: none;
 }
