@@ -24,3 +24,4 @@ Creating webportal with different functions:
 
 ## Features
 * Use a client-side astronomical algorithm (e.g., the NOAA Solar Calculator or the U.S. Naval Observatory algorithm) that accepts latitude, longitude, date, and timezone. These formulas are well-documented and easy to implement in JavaScript. To gather location data, we are using the android or iOS phone/tablet GSP location. If no loctaion is found, no automation.
+* Create a local webadress so users do not have to use the IP to connect to the website.
