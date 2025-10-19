@@ -239,8 +239,11 @@ body.night-vision main {
 }
 
 .footer-logo {
-  height: 36px;
-  width: auto;
+  flex-shrink: 0;
+  display: block;
+  width: clamp(120px, 25%, 200px);
+  max-width: 100%;
+  height: auto;
 }
 
 @media (max-width: 480px) {
@@ -255,6 +258,7 @@ body.night-vision main {
   }
 
   .footer-logo {
-    height: 28px;
+    width: clamp(160px, 60%, 220px);
+    margin-inline: auto;
   }
 }
