@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 60" role="img" aria-labelledby="title desc">
+  <title id="title">Apatch Identification &amp; Equipment</title>
+  <desc id="desc">Stylized logotype reading Apatch Identification and Equipment with a triangular mark.</desc>
+  <g fill="none" fill-rule="evenodd">
+    <path fill="#000" d="M10 52h12l4-10h20l4 10h12L44 8H28L10 52Zm24.8-18-6.8-17-6.8 17h13.6Z"/>
+    <path fill="#000" d="M81 52h11.6L103 8H91.2l-4.6 20.4L82 8H69.6l8 44Zm32 0h11.2L132.4 8H119l-16 44Zm45.8-30.4V8h-33.2v44h32.4v-9.6h-21.2v-6.8h18v-9.2h-18v-4.8h22Zm19.2-13.2h-11.2V52h11.2V8.4Zm35 0h-12L223 26l-7-17.6h-12L217 52h12l7.2-17.6L243 52h12l-20-43.6Z"/>
+    <text fill="#000" font-family="'Arial', 'Helvetica Neue', Helvetica, sans-serif" font-size="9" font-weight="700" letter-spacing="1.8" transform="translate(10 58)">
+      IDENTIFICATION &amp; EQUIPMENT
+    </text>
+  </g>
+</svg>
