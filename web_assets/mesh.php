@@ -11,15 +11,36 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <?php include __DIR__ . '/php/menu.php'; ?>
     <?php include __DIR__ . '/php/theme-toggle.php'; ?>
-    <main>
-      <h1>Mesh Network Resources</h1>
-      <p>Find documentation and utilities to help you deploy and maintain the mesh network.</p>
-      <ul class="download-links">
-        <li><a href="/mesh/docs/">Mesh documentation</a></li>
-        <li><a href="/mesh/tools/">Mesh tooling</a></li>
-      </ul>
+    <header class="page-hero">
+      <p class="hero-eyebrow">Mesh Network Resources</p>
+      <h1>Build resilient field connectivity</h1>
+      <p class="hero-summary">
+        Access playbooks, diagnostics, and deployment utilities that keep the mesh network
+        operating across remote Raspberry Pi sites.
+      </p>
+    </header>
+
+    <main id="main-content" class="page-main" tabindex="-1">
+      <section class="content-card">
+        <h2>Documentation</h2>
+        <p>
+          Review step-by-step guides for standing up new nodes, integrating with backhaul
+          links, and troubleshooting on-site issues.
+        </p>
+        <p class="cta-link"><a href="/mesh/docs/">Browse mesh documentation</a></p>
+      </section>
+
+      <section class="content-card">
+        <h2>Tools and utilities</h2>
+        <p>
+          Download monitoring scripts, configuration templates, and firmware bundles that
+          support day-to-day network maintenance.
+        </p>
+        <p class="cta-link"><a href="/mesh/tools/">Download mesh tooling</a></p>
+      </section>
     </main>
 
     <?php include __DIR__ . '/php/footer.php'; ?>

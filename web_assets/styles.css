@@ -23,6 +23,26 @@ body {
   box-sizing: border-box;
 }
 
+.skip-link {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 999px;
+  transform: translateY(-200%);
+  transition: transform 0.2s ease;
+  z-index: 20;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 3px solid #1d4ed8;
+  outline-offset: 3px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -44,16 +64,65 @@ body.night-vision {
   --footer-background: rgba(255, 255, 255, 0.2);
 }
 
-main {
+.page-hero,
+.content-card {
   background-color: var(--card-background);
   padding: 2.5rem 3rem;
   border-radius: 1rem;
   box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15);
-  width: min(100%, 32rem);
-  margin: 0 auto 2rem;
-  text-align: center;
   backdrop-filter: blur(6px);
+}
+
+.page-hero {
+  width: min(100%, 52rem);
+  margin: 0 auto 2rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.hero-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin: 0;
+  color: rgba(15, 23, 42, 0.7);
+}
+
+.hero-summary {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+main {
+  width: min(100%, 52rem);
+  margin: 0 auto 2rem;
   flex: 0 0 auto;
+}
+
+main.page-main {
+  background: none;
+  padding: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.content-card {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 h1 {
@@ -70,6 +139,98 @@ a {
 a:hover,
 a:focus {
   text-decoration: underline;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  background: var(--toggle-background);
+  color: inherit;
+  font-weight: 700;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.button.primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #1d4ed8;
+}
+
+.button:hover,
+.button:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+}
+
+.feature-list,
+.resource-list,
+.download-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.feature-list li,
+.resource-list li,
+.download-list li {
+  line-height: 1.6;
+}
+
+.resource-list h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+}
+
+.resource-list p {
+  margin: 0 0 0.75rem;
+}
+
+.download-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.download-meta {
+  flex: 1 1 16rem;
+}
+
+.download-meta h3 {
+  margin: 0 0 0.2rem;
+  font-size: 1.1rem;
+}
+
+.download-details {
+  margin: 0;
+  font-size: 0.95rem;
+  color: rgba(15, 23, 42, 0.75);
+}
+
+body.night-vision .download-details {
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.download-empty {
+  margin: 0;
+  font-style: italic;
+  color: rgba(15, 23, 42, 0.75);
+}
+
+body.night-vision .download-empty {
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.cta-link {
+  font-weight: 600;
 }
 
 .theme-toggle {
@@ -201,22 +362,9 @@ a:focus {
   outline: none;
 }
 
-body.night-vision main {
+body.night-vision .page-hero,
+body.night-vision .content-card {
   box-shadow: none;
-}
-
-.download-links {
-  list-style: none;
-  padding: 0;
-  margin: 1.5rem 0 2rem;
-}
-
-.download-links li {
-  margin-bottom: 1rem;
-}
-
-.back-link a {
-  font-weight: 500;
 }
 
 .site-footer {
@@ -248,8 +396,14 @@ body.night-vision main {
 }
 
 @media (max-width: 480px) {
-  main {
+  .page-hero,
+  .content-card {
     padding: 2rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .footer-content {
