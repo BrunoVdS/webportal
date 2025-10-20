@@ -59,14 +59,14 @@ body.night-vision {
   --focus-outline: #000;
   --focus-ring: rgba(0, 0, 0, 0.35);
   --download-card-background: var(--background);
-  --download-card-shadow: none;
+  --download-card-shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
   --download-card-description: #000;
   --download-card-placeholder-bg: var(--background);
   --download-card-placeholder-text: #000;
-  --download-card-button-bg: var(--background);
+  --download-card-button-bg: rgba(0, 0, 0, 0.12);
   --download-card-button-text: #000;
-  --download-card-button-shadow: none;
-  --download-card-button-hover-bg: var(--background);
+  --download-card-button-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  --download-card-button-hover-bg: rgba(0, 0, 0, 0.22);
   --menu-drawer-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
