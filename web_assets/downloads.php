@@ -90,7 +90,11 @@
                 <p class="download-card__description"><?php echo htmlspecialchars($download_software['description']); ?></p>
               </div>
               <?php if (!empty($download_software['file'])): ?>
-                <a class="download-card__button" href="<?php echo htmlspecialchars($download_software['file'], ENT_QUOTES); ?>" download>
+                <a
+                  class="download-card__button button"
+                  href="<?php echo htmlspecialchars($download_software['file'], ENT_QUOTES); ?>"
+                  download
+                >
                   Download APK
                 </a>
               <?php else: ?>
@@ -122,7 +126,11 @@
                 <p class="download-card__description"><?php echo htmlspecialchars($download_manual['description']); ?></p>
               </div>
               <?php if (!empty($download_manual['file'])): ?>
-                <a class="download-card__button" href="<?php echo htmlspecialchars($download_manual['file'], ENT_QUOTES); ?>" download>
+                <a
+                  class="download-card__button button"
+                  href="<?php echo htmlspecialchars($download_manual['file'], ENT_QUOTES); ?>"
+                  download
+                >
                   Download manual
                 </a>
               <?php else: ?>
