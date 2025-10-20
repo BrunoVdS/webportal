@@ -1,4 +1,4 @@
-# Mesh network (BAT0)
+# Mesh network (bat0)
 Creating the bat0 mesh for the nodes to connect.
 Node komes online when the node boots/reboots.
 
