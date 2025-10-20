@@ -376,7 +376,7 @@ a:focus {
 }
 
 body.night-vision main {
-  box-shadow: none;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
 }
 
 body.night-vision .page-main:focus {
