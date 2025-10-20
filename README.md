@@ -11,7 +11,7 @@ Building access point on erry Pi's wifi(wlan0).
 
 # Webportal
 Creating webportal with different functions:
-  - Download server
+  - Download server (software & manuals)
   - Display mesh staus
   - ...
 
