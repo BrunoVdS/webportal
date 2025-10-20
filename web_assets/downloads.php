@@ -14,45 +14,61 @@
     <?php include __DIR__ . '/php/menu.php'; ?>
     <?php include __DIR__ . '/php/theme-toggle.php'; ?>
     <?php
-      $downloads = [
+      $downloads_software = [
         [
           'title' => 'ATAK for Raspberry Pi',
           'description' => 'Latest Android Team Awareness Kit client build packaged for Raspberry Pi devices.',
-          'file' => '/files/atak.apk',
-          'logo' => 'images/apatch-logo.svg',
+          'file' => '/files/software/atak.apk',
+          'logo' => 'images/atak_civ.png',
         ],
         [
           'title' => 'Sideband Communications Suite',
           'description' => 'Secure messaging and voice add-on to enhance field communications and coordination.',
-          'file' => '/files/sideband.apk',
-          'logo' => 'images/apatch-logo.svg',
+          'file' => '/files/software/sideband.apk',
+          'logo' => 'images/reticulum_sideband.png',
         ],
         [
           'title' => 'RNS Field Tools (Coming Soon)',
           'description' => 'Utility toolkit for managing RNS deployments. Subscribe for alerts when the APK is published.',
           'file' => null,
-          'logo' => 'images/apatch-logo.svg',
+          'logo' => 'images/reticulum_sideband.png',
+        ],
+      ];
+    ?>
+
+    <?php
+      $downloads_manual = [
+        [
+          'title' => 'ATAK manual',
+          'description' => 'Complete ATAK manual in PFD format.',
+          'file' => '/files/software/atak.PDF',
+          'logo' => 'images/atak_civ.png'
+        ],
+        [
+          'title' => 'Reticulum manual',
+          'description' => 'Complete Reticulum manual in PFD format.',
+          'file' => '/files/manual/reticulum.pdf',
+          'logo' => 'images/reticulum_sideband.png',
+        ],
+        [
+          'title' => 'RNS Field Tools manual (Coming Soon)',
+          'description' => 'Utility toolkit manual in PDF format.',
+          'file' => null,
+          'logo' => 'images/reticulum_sideband.png',
         ],
       ];
     ?>
 
     <main id="main-content" class="page-main" tabindex="-1">
       <header class="page-hero">
-        <p class="hero-eyebrow">Download Center</p>
-        <h1>Mission ready software packages</h1>
-        <p class="hero-summary">
-          Select an application below to review its capabilities and grab the latest
-          build for your field kits. All downloads are served directly from this node
-          for reliable offline mirroring.
-        </p>
+        <h1>Download Center</h1>
         <div class="hero-actions">
-          <a class="button" href="/files/">View raw directory</a>
           <a class="button" href="index.php">Return to dashboard</a>
         </div>
       </header>
 
       <section class="content-card">
-        <h2>Available downloads</h2>
+        <h2>Software</h2>
         <p>
           Browse curated tooling, communications suites, and support utilities engineered
           for rapid deployment. Each entry includes a signed package ready for transfer to
@@ -60,22 +76,54 @@
         </p>
 
         <div class="download-grid" aria-label="Available downloads">
-          <?php foreach ($downloads as $download): ?>
+          <?php foreach ($downloads_software as $download_software): ?>
             <article class="download-card">
               <div class="download-card__media" aria-hidden="true">
                 <img
-                  src="<?php echo htmlspecialchars($download['logo'], ENT_QUOTES); ?>"
+                  src="<?php echo htmlspecialchars($download_software['logo'], ENT_QUOTES); ?>"
                   alt=""
                   class="download-card__logo"
                 >
               </div>
               <div class="download-card__body">
-                <h3 class="download-card__title"><?php echo htmlspecialchars($download['title']); ?></h3>
-                <p class="download-card__description"><?php echo htmlspecialchars($download['description']); ?></p>
+                <h3 class="download-card__title"><?php echo htmlspecialchars($download_software['title']); ?></h3>
+                <p class="download-card__description"><?php echo htmlspecialchars($download_software['description']); ?></p>
               </div>
-              <?php if (!empty($download['file'])): ?>
-                <a class="download-card__button" href="<?php echo htmlspecialchars($download['file'], ENT_QUOTES); ?>" download>
+              <?php if (!empty($download_software['file'])): ?>
+                <a class="download-card__button" href="<?php echo htmlspecialchars($download_software['file'], ENT_QUOTES); ?>" download>
                   Download APK
+                </a>
+              <?php else: ?>
+                <span class="download-card__placeholder" aria-label="Download coming soon">Coming Soon</span>
+              <?php endif; ?>
+            </article>
+          <?php endforeach; ?>
+        </div>
+      </section>
+
+<section class="content-card">
+        <h2>Manual</h2>
+        <p>
+          All the PDF manual you could need to expand your knowledge of the software used in this node.
+        </p>
+
+        <div class="download-grid" aria-label="Available downloads">
+          <?php foreach ($downloads_manual as $download_manual): ?>
+            <article class="download-card">
+              <div class="download-card__media" aria-hidden="true">
+                <img
+                  src="<?php echo htmlspecialchars($download_manual['logo'], ENT_QUOTES); ?>"
+                  alt=""
+                  class="download-card__logo"
+                >
+              </div>
+              <div class="download-card__body">
+                <h3 class="download-card__title"><?php echo htmlspecialchars($download_manual['title']); ?></h3>
+                <p class="download-card__description"><?php echo htmlspecialchars($download_manual['description']); ?></p>
+              </div>
+              <?php if (!empty($download_manual['file'])): ?>
+                <a class="download-card__button" href="<?php echo htmlspecialchars($download_manual['file'], ENT_QUOTES); ?>" download>
+                  Download manual
                 </a>
               <?php else: ?>
                 <span class="download-card__placeholder" aria-label="Download coming soon">Coming Soon</span>
@@ -92,7 +140,7 @@
           portal. Use the link below to script automated retrievals or to capture checksums
           for integrity verification before field deployment.
         </p>
-        <p class="cta-link"><a href="/files/">Open the /files/ directory</a></p>
+        <a class="button" href="/files/">View raw directory</a>
       </section>
     </main>
 
