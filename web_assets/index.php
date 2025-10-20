@@ -45,7 +45,7 @@
           Ready to dive straight into the repository? Jump directly to the full directory
           listing to locate a specific image or asset.
         </p>
-        <p class="cta-link"><a href="/files/">Open the /files/ directory</a></p>
+        <a class="button" href="/files/">View raw directory</a>
       </section>
     </main>
 
