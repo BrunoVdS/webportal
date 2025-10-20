@@ -15,10 +15,6 @@
   --download-card-description: rgba(15, 23, 42, 0.75);
   --download-card-placeholder-bg: rgba(15, 23, 42, 0.12);
   --download-card-placeholder-text: rgba(15, 23, 42, 0.7);
-  --download-card-button-bg: #2563eb;
-  --download-card-button-text: #fff;
-  --download-card-button-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
-  --download-card-button-hover-bg: #1d4ed8;
   --menu-drawer-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
 }
 
@@ -63,10 +59,6 @@ body.night-vision {
   --download-card-description: #000;
   --download-card-placeholder-bg: var(--background);
   --download-card-placeholder-text: #000;
-  --download-card-button-bg: rgba(0, 0, 0, 0.12);
-  --download-card-button-text: #000;
-  --download-card-button-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
-  --download-card-button-hover-bg: rgba(0, 0, 0, 0.22);
   --menu-drawer-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
@@ -383,14 +375,6 @@ body.night-vision .page-main:focus {
   box-shadow: 0 0 0 4px var(--focus-ring);
 }
 
-body.night-vision .download-card__media {
-  background: rgba(0, 0, 0, 0.35);
-}
-
-body.night-vision .download-card__media::after {
-  background: rgba(255, 0, 0, 0.4);
-}
-
 .download-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -419,16 +403,7 @@ body.night-vision .download-card__media::after {
   justify-content: center;
   padding: 0.75rem;
   border-radius: 0.85rem;
-  background: rgba(37, 99, 235, 0.08);
   overflow: hidden;
-}
-
-.download-card__media::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: transparent;
-  transition: background 0.2s ease;
 }
 
 .download-card:hover,
@@ -466,19 +441,8 @@ body.night-vision .download-card__media::after {
   font-weight: 700;
   font-size: 0.95rem;
   transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-}
-
-.download-card__button {
-  background: var(--download-card-button-bg);
-  color: var(--download-card-button-text);
-  box-shadow: var(--download-card-button-shadow);
-}
-
-.download-card__button:hover,
-.download-card__button:focus {
-  transform: translateY(-2px);
-  background: var(--download-card-button-hover-bg);
-  text-decoration: none;
+  width: 100%;
+  max-width: 14rem;
 }
 
 .download-card__placeholder {
