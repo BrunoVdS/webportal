@@ -45,7 +45,7 @@
           Ready to dive straight into the repository? Jump directly to the full directory
           listing to locate a specific image or asset.
         </p>
-        <a class="button" href="/files/">View raw directory</a>
+        <a class="button" href="/files/">View files directory</a>
       </section>
     </main>
 
