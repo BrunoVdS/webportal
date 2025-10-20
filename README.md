@@ -5,7 +5,7 @@ Node komes online when the node boots/reboots.
 # Reticulum installation
 The installation script provisions Reticulum inside an isolated virtual environment located at `/opt/reticulum-venv` and exposes the `rn*` command-line tools via symlinks in `/usr/local/bin`. This avoids modifying system Python packages while keeping the utilities globally accessible.
 
-Thhe config file is located ~/.reticulum
+The config file is located ~/.reticulum
 
 A custom config file is included in this repository.
 
