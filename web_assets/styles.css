@@ -336,6 +336,7 @@ a:focus {
   gap: 1.5rem;
   margin: 2rem 0 2.5rem;
   padding: 0;
+  grid-auto-rows: 1fr;
 }
 
 .download-card {
@@ -343,12 +344,13 @@ a:focus {
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  padding: 1.75rem 1.5rem;
+  padding: 1.75rem 1.5rem 2.25rem;
   border-radius: 0.9rem;
   text-align: center;
   background: var(--download-card-background);
   box-shadow: var(--download-card-shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
 }
 
 .download-card__media {
@@ -386,6 +388,22 @@ a:focus {
   color: var(--download-card-description);
 }
 
+.download-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.download-card__actions {
+  margin-top: auto;
+  padding-top: 1rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 .download-card__button,
 .download-card__placeholder {
   display: inline-flex;
@@ -403,6 +421,12 @@ a:focus {
 .download-card__placeholder {
   background: var(--download-card-placeholder-bg);
   color: var(--download-card-placeholder-text);
+}
+
+.content-card__cta {
+  padding-top: 1.5rem;
+  display: flex;
+  justify-content: center;
 }
 
 .download-links {

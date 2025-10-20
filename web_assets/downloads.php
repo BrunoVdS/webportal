@@ -89,17 +89,19 @@
                 <h3 class="download-card__title"><?php echo htmlspecialchars($download_software['title']); ?></h3>
                 <p class="download-card__description"><?php echo htmlspecialchars($download_software['description']); ?></p>
               </div>
-              <?php if (!empty($download_software['file'])): ?>
-                <a
-                  class="download-card__button button"
-                  href="<?php echo htmlspecialchars($download_software['file'], ENT_QUOTES); ?>"
-                  download
-                >
-                  Download APK
-                </a>
-              <?php else: ?>
-                <span class="download-card__placeholder" aria-label="Download coming soon">Coming Soon</span>
-              <?php endif; ?>
+              <div class="download-card__actions">
+                <?php if (!empty($download_software['file'])): ?>
+                  <a
+                    class="download-card__button button"
+                    href="<?php echo htmlspecialchars($download_software['file'], ENT_QUOTES); ?>"
+                    download
+                  >
+                    Download APK
+                  </a>
+                <?php else: ?>
+                  <span class="download-card__placeholder" aria-label="Download coming soon">Coming Soon</span>
+                <?php endif; ?>
+              </div>
             </article>
           <?php endforeach; ?>
         </div>
@@ -125,17 +127,19 @@
                 <h3 class="download-card__title"><?php echo htmlspecialchars($download_manual['title']); ?></h3>
                 <p class="download-card__description"><?php echo htmlspecialchars($download_manual['description']); ?></p>
               </div>
-              <?php if (!empty($download_manual['file'])): ?>
-                <a
-                  class="download-card__button button"
-                  href="<?php echo htmlspecialchars($download_manual['file'], ENT_QUOTES); ?>"
-                  download
-                >
-                  Download manual
-                </a>
-              <?php else: ?>
-                <span class="download-card__placeholder" aria-label="Download coming soon">Coming Soon</span>
-              <?php endif; ?>
+              <div class="download-card__actions">
+                <?php if (!empty($download_manual['file'])): ?>
+                  <a
+                    class="download-card__button button"
+                    href="<?php echo htmlspecialchars($download_manual['file'], ENT_QUOTES); ?>"
+                    download
+                  >
+                    Download manual
+                  </a>
+                <?php else: ?>
+                  <span class="download-card__placeholder" aria-label="Download coming soon">Coming Soon</span>
+                <?php endif; ?>
+              </div>
             </article>
           <?php endforeach; ?>
         </div>
@@ -148,7 +152,9 @@
           portal. Use the link below to script automated retrievals or to capture checksums
           for integrity verification before field deployment.
         </p>
-        <a class="button" href="/files/">View raw directory</a>
+        <div class="content-card__cta">
+          <a class="button" href="/files/">View raw directory</a>
+        </div>
       </section>
     </main>
 
