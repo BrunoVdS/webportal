@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta
       name="description"
-      content="Access Raspberry Pi downloads and resources from the Pi Download Server home page."
+      content="Access Node portal,mesh info and download server."
     >
-    <title>Pi Download Server</title>
+    <title>Node webportal</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
