@@ -14,22 +14,21 @@
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <?php include __DIR__ . '/php/menu.php'; ?>
     <?php include __DIR__ . '/php/theme-toggle.php'; ?>
-    <main>
-    <header class="page-hero">
-      <p class="hero-eyebrow">Pi Download Server</p>
-      <h1>Welcome to the Raspberry Pi download server</h1>
-        <p>Files: <a href="downloads.php">Download files</a></p>
-      <p class="hero-summary">
-        Your hub for firmware, operating system images, and mesh network resources for
-        Raspberry Pi devices managed by the field network team.
-      </p>
-      <div class="hero-actions">
-        <a class="button primary" href="downloads.php">Browse downloads</a>
-        <a class="button" href="mesh.php">Explore mesh resources</a>
-      </div>
-    </header>
-
     <main id="main-content" class="page-main" tabindex="-1">
+      <header class="page-hero">
+        <p class="hero-eyebrow">Pi Download Server</p>
+        <h1>Welcome to the Raspberry Pi download server</h1>
+        <p>Files: <a href="downloads.php">Download files</a></p>
+        <p class="hero-summary">
+          Your hub for firmware, operating system images, and mesh network resources for
+          Raspberry Pi devices managed by the field network team.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="downloads.php">Browse downloads</a>
+          <a class="button" href="mesh.php">Explore mesh resources</a>
+        </div>
+      </header>
+
       <section class="content-card">
         <h2>Getting started</h2>
         <p>
