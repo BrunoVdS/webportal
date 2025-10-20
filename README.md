@@ -18,8 +18,9 @@ Creating webportal with different functions:
 
 ## Follow-up tasks
 
-* Enhance download-page with clean interface (pics of software, menu interface, ...)
-* Enhance the index.html, menu interface, mesh info, status of the installed services.
+* Enhance download-page - more elegant solution to add and change the data. Database driven might be the option.
+* Enhance the index.html, status of the installed services.
+* Integrate the mesh info page of Natak Mesh.
 * Create a QR code on the landings page to give temporary access to the AP. valid for hr. Or have code pressent that can create this code.
 
 ## Features
