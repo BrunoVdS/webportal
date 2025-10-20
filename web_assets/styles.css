@@ -54,7 +54,7 @@ body.night-vision {
   --link-color: #000;
   --toggle-background: var(--background);
   --toggle-text: #000;
-  --footer-background: var(--background);
+  --footer-background: rgb(176, 20, 16);
   --border-color: #000;
   --focus-outline: #000;
   --focus-ring: rgba(0, 0, 0, 0.35);
