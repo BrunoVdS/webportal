@@ -383,6 +383,14 @@ body.night-vision .page-main:focus {
   box-shadow: 0 0 0 4px var(--focus-ring);
 }
 
+body.night-vision .download-card__media {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+body.night-vision .download-card__media::after {
+  background: rgba(255, 0, 0, 0.4);
+}
+
 .download-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -404,6 +412,25 @@ body.night-vision .page-main:focus {
   text-align: center;
 }
 
+.download-card__media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  border-radius: 0.85rem;
+  background: rgba(37, 99, 235, 0.08);
+  overflow: hidden;
+}
+
+.download-card__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
 .download-card:hover,
 .download-card:focus-within {
   transform: translateY(-4px);
@@ -411,8 +438,10 @@ body.night-vision .page-main:focus {
 }
 
 .download-card__logo {
+  position: relative;
   width: clamp(60px, 25%, 96px);
   height: auto;
+  z-index: 1;
 }
 
 .download-card__title {
@@ -455,6 +484,31 @@ body.night-vision .page-main:focus {
 .download-card__placeholder {
   background: var(--download-card-placeholder-bg);
   color: var(--download-card-placeholder-text);
+}
+
+.download-links {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.download-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.download-links a::after {
+  content: "→";
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+
+.download-links a:hover::after,
+.download-links a:focus::after {
+  transform: translateX(4px);
 }
 
 .back-link a {
