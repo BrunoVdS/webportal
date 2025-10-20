@@ -148,7 +148,7 @@
           portal. Use the link below to script automated retrievals or to capture checksums
           for integrity verification before field deployment.
         </p>
-        <a class="button" href="/files/">View raw directory</a>
+        <a class="button" href="/files/">View files directory</a>
       </section>
     </main>
 
