@@ -25,11 +25,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  padding: 4rem 1rem 5rem;
+  box-sizing: border-box;
   background: var(--background);
   color: var(--text-color);
   transition: background 0.3s ease, color 0.3s ease;
-  padding: 4rem 1rem 5rem;
-  box-sizing: border-box;
 }
 
 .sr-only {
@@ -43,60 +43,66 @@ body {
   border: 0;
 }
 
-body.night-vision {
-  --background: rgb(222, 26, 20);
-  --text-color: #000;
-  --card-background: var(--background);
-  --link-color: #000;
-  --toggle-background: var(--background);
-  --toggle-text: #000;
-  --footer-background: rgb(176, 20, 16);
-  --border-color: #000;
-  --focus-outline: #000;
-  --focus-ring: rgba(0, 0, 0, 0.35);
-  --download-card-background: var(--background);
-  --download-card-shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
-  --download-card-description: #000;
-  --download-card-placeholder-bg: var(--background);
-  --download-card-placeholder-text: #000;
-  --menu-drawer-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-}
-
-main {
-  background-color: var(--card-background);
-  padding: 2.5rem 3rem;
-  border-radius: 1rem;
-  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15);
-  width: min(100%, 72rem);
-  margin: 0 auto 2rem;
-  backdrop-filter: blur(6px);
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
-}
-
 .page-main:focus {
   outline: none;
   box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15), 0 0 0 4px var(--focus-ring);
 }
 
-.skip-link {
-  position: absolute;
-  left: 50%;
-  top: -6rem;
-  transform: translateX(-50%);
-  padding: 0.75rem 1.25rem;
-  border-radius: 999px;
-  background: var(--link-color);
-  color: #fff;
-  font-weight: 700;
-  transition: top 0.2s ease;
-  z-index: 100;
+body.night-vision {
+  --background: rgb(222, 26, 20);
+  --text-color: #000;
+  --card-background: rgb(222, 26, 20);
+  --link-color: #000;
+  --toggle-background: rgb(222, 26, 20);
+  --toggle-text: #000;
+  --footer-background: rgb(176, 20, 16);
+  --border-color: #000;
+  --focus-outline: #000;
+  --focus-ring: rgba(0, 0, 0, 0.35);
+  --download-card-background: rgb(222, 26, 20);
+  --download-card-shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
+  --download-card-description: #000;
+  --download-card-placeholder-bg: rgb(222, 26, 20);
+  --download-card-placeholder-text: #000;
+  --menu-drawer-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
-.skip-link:focus {
-  top: 1.5rem;
+body.night-vision main {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+body.night-vision .page-main:focus {
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+main {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  width: min(100%, 72rem);
+  margin: 0 auto 2rem;
+  padding: 2.5rem 3rem;
+  border-radius: 1rem;
+  background: var(--card-background);
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15);
+  backdrop-filter: blur(6px);
+}
+
+h1 {
+  margin-bottom: 1.5rem;
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+}
+
+a {
+  color: var(--link-color);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a:hover,
+a:focus {
+  text-decoration: underline;
 }
 
 .page-hero {
@@ -110,10 +116,6 @@ main {
 .page-hero p {
   margin: 0;
   line-height: 1.6;
-}
-
-.page-hero p + p {
-  margin-top: 0.5rem;
 }
 
 .hero-eyebrow {
@@ -159,8 +161,8 @@ main {
 }
 
 .button.primary {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: #fff;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   box-shadow: 0 15px 35px rgba(37, 99, 235, 0.35);
 }
 
@@ -170,22 +172,21 @@ main {
 }
 
 .content-card {
-  background: var(--card-background);
-  border-radius: 1rem;
   padding: 2rem;
-  text-align: left;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  border-radius: 1rem;
   border: 1px solid rgba(15, 23, 42, 0.05);
+  background: var(--card-background);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  text-align: left;
 }
 
 .content-card h2 {
-  margin-top: 0;
-  margin-bottom: 1rem;
+  margin: 0 0 1rem;
   font-size: 1.5rem;
 }
 
 .content-card p {
-  margin-top: 0;
+  margin: 0;
   line-height: 1.6;
 }
 
@@ -198,50 +199,6 @@ main {
 
 .feature-list li {
   line-height: 1.5;
-}
-
-.cta-link {
-  margin-top: 1.5rem;
-  font-weight: 700;
-}
-
-.cta-link a {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.cta-link a::after {
-  content: "→";
-  font-size: 1.1rem;
-  transition: transform 0.2s ease;
-}
-
-.cta-link a:hover::after,
-.cta-link a:focus::after {
-  transform: translateX(4px);
-}
-
-h1 {
-  font-size: clamp(1.8rem, 5vw, 2.4rem);
-  margin-bottom: 1.5rem;
-}
-
-a {
-  color: var(--link-color);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-a:hover,
-a:focus {
-  text-decoration: underline;
-}
-
-.theme-toggle {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
 }
 
 .site-menu {
@@ -290,7 +247,7 @@ a:focus {
   display: block;
   width: 1.2rem;
   height: 2px;
-  background-color: var(--toggle-text);
+  background: var(--toggle-text);
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
@@ -309,11 +266,11 @@ a:focus {
 .menu-drawer {
   display: block;
   margin-top: 0.75rem;
-  background: var(--card-background);
-  border-radius: 0.75rem;
-  box-shadow: none;
   padding: 1rem 1.25rem;
   min-width: 12rem;
+  border-radius: 0.75rem;
+  background: var(--card-background);
+  box-shadow: none;
   backdrop-filter: blur(6px);
 }
 
@@ -331,12 +288,12 @@ a:focus {
 }
 
 .menu-drawer ul {
-  list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  list-style: none;
 }
 
 .menu-drawer a {
@@ -349,12 +306,18 @@ a:focus {
   text-decoration: underline;
 }
 
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+}
+
 .theme-toggle button {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
   background: var(--toggle-background);
   color: var(--toggle-text);
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
-  padding: 0.5rem 1rem;
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
@@ -365,14 +328,6 @@ a:focus {
 .theme-toggle button:focus {
   transform: translateY(-1px);
   outline: none;
-}
-
-body.night-vision main {
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
-}
-
-body.night-vision .page-main:focus {
-  box-shadow: 0 0 0 4px var(--focus-ring);
 }
 
 .download-grid {
@@ -388,12 +343,12 @@ body.night-vision .page-main:focus {
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  background: var(--download-card-background);
-  border-radius: 0.9rem;
   padding: 1.75rem 1.5rem;
+  border-radius: 0.9rem;
+  text-align: center;
+  background: var(--download-card-background);
   box-shadow: var(--download-card-shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  text-align: center;
 }
 
 .download-card__media {
@@ -436,13 +391,13 @@ body.night-vision .page-main:focus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  max-width: 14rem;
   padding: 0.65rem 1.5rem;
   border-radius: 999px;
   font-weight: 700;
   font-size: 0.95rem;
   transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-  width: 100%;
-  max-width: 14rem;
 }
 
 .download-card__placeholder {
@@ -451,11 +406,11 @@ body.night-vision .page-main:focus {
 }
 
 .download-links {
-  list-style: none;
   margin: 1.5rem 0 0;
   padding: 0;
   display: grid;
   gap: 0.75rem;
+  list-style: none;
 }
 
 .download-links a {
@@ -475,15 +430,11 @@ body.night-vision .page-main:focus {
   transform: translateX(4px);
 }
 
-.back-link a {
-  font-weight: 500;
-}
-
 .site-footer {
   width: 100%;
-  background: var(--footer-background);
   margin-top: auto;
   padding: 1rem 0;
+  background: var(--footer-background);
 }
 
 .footer-content {
