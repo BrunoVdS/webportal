@@ -1,6 +1,7 @@
 # Mesh network (bat0)
-Creating the bat0 mesh for the nodes to connect.
-Node komes online when the node boots/reboots.
+Creating the bat0 mesh for the nodes to connect. Node komes online when the node boots/reboots.
+
+wlan1 is configured to create a wifi mesh (bat0)
 
 # Reticulum installation
 The installation script provisions Reticulum inside an isolated virtual environment located at `/opt/reticulum-venv` and exposes the `rn*` command-line tools via symlinks in `/usr/local/bin`. This avoids modifying system Python packages while keeping the utilities globally accessible.
