@@ -50,23 +50,23 @@ body {
 body.night-vision {
   --background: rgb(222, 26, 20);
   --text-color: #000;
-  --card-background: #000;
+  --card-background: var(--background);
   --link-color: #000;
-  --toggle-background: #000;
+  --toggle-background: var(--background);
   --toggle-text: #000;
-  --footer-background: #000;
+  --footer-background: var(--background);
   --border-color: #000;
   --focus-outline: #000;
   --focus-ring: rgba(0, 0, 0, 0.35);
-  --download-card-background: #000;
+  --download-card-background: var(--background);
   --download-card-shadow: none;
   --download-card-description: #000;
-  --download-card-placeholder-bg: #000;
+  --download-card-placeholder-bg: var(--background);
   --download-card-placeholder-text: #000;
-  --download-card-button-bg: #000;
+  --download-card-button-bg: var(--background);
   --download-card-button-text: #000;
   --download-card-button-shadow: none;
-  --download-card-button-hover-bg: #000;
+  --download-card-button-hover-bg: var(--background);
   --menu-drawer-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
