@@ -490,6 +490,7 @@ info "Mesh setup done. Gebruik 'meshctl status' voor je daily dosis realiteit."
 sleep 5
 
 # === Reticulum ============================================================
+  # === Install Reticulum (rnsd)
 info "Installing Reticulum."
 
 RNS_VENV_DIR="/opt/reticulum-venv"
@@ -517,6 +518,7 @@ else
   shopt -u nullglob
 fi
 
+  # === Creating systemd service
 info "Reticulum installed in isolated virtual environment."
 
 info "Create Systemd service (automated startup)"
@@ -538,6 +540,59 @@ systemctl enable rnsd
 systemctl start rnsd
 
 info "Reticulum installed."
+
+sleep 5
+
+# === Meshtastic CLI =======================================================
+  # === Install Meshtastic CLI
+info "Installing Meshtastic CLI."
+
+MESHTASTIC_VENV_DIR="/opt/meshtastic-venv"
+
+if [ ! -d "$MESHTASTIC_VENV_DIR" ]; then
+  python3 -m venv "$MESHTASTIC_VENV_DIR"
+  info "Created virtual environment in $MESHTASTIC_VENV_DIR"
+else
+  info "Using existing virtual environment in $MESHTASTIC_VENV_DIR"
+fi
+
+"$MESHTASTIC_VENV_DIR/bin/pip" install --upgrade pip wheel
+"$MESHTASTIC_VENV_DIR/bin/pip" install --upgrade meshtastic
+
+for cli_tool in meshtastic meshtasticd; do
+  cli_path="$MESHTASTIC_VENV_DIR/bin/$cli_tool"
+  if [ -f "$cli_path" ] && [ -x "$cli_path" ]; then
+    ln -sf "$cli_path" "/usr/local/bin/$cli_tool"
+  fi
+done
+
+info "Meshtastic CLI installed in isolated virtual environment."
+
+
+  # === Meshtastic systemd service
+info "Configuring Meshtastic systemd service."
+
+cat <<'EOF' > /etc/systemd/system/meshtasticd.service
+[Unit]
+Description=Meshtastic Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/meshtasticd
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable meshtasticd
+systemctl restart meshtasticd
+
+info "Meshtastic service enabled."
+
+sleep 5
 
 
 # === Flask Web Application ====================================================
@@ -607,57 +662,10 @@ systemctl restart flask-app.service
 
 info "Flask application environment configured and service enabled."
 
-
-# === Meshtastic CLI =======================================================
-info "Installing Meshtastic CLI."
-
-MESHTASTIC_VENV_DIR="/opt/meshtastic-venv"
-
-if [ ! -d "$MESHTASTIC_VENV_DIR" ]; then
-  python3 -m venv "$MESHTASTIC_VENV_DIR"
-  info "Created virtual environment in $MESHTASTIC_VENV_DIR"
-else
-  info "Using existing virtual environment in $MESHTASTIC_VENV_DIR"
-fi
-
-"$MESHTASTIC_VENV_DIR/bin/pip" install --upgrade pip wheel
-"$MESHTASTIC_VENV_DIR/bin/pip" install --upgrade meshtastic
-
-for cli_tool in meshtastic meshtasticd; do
-  cli_path="$MESHTASTIC_VENV_DIR/bin/$cli_tool"
-  if [ -f "$cli_path" ] && [ -x "$cli_path" ]; then
-    ln -sf "$cli_path" "/usr/local/bin/$cli_tool"
-  fi
-done
-
-info "Meshtastic CLI installed in isolated virtual environment."
+sleep 5
 
 
-# === Meshtastic systemd service ================================================
-info "Configuring Meshtastic systemd service."
-
-cat <<'EOF' > /etc/systemd/system/meshtasticd.service
-[Unit]
-Description=Meshtastic Daemon
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/meshtasticd
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable meshtasticd
-systemctl restart meshtasticd
-
-info "Meshtastic service enabled."
-
-
-# === Firewall (nftables) =====================================================
+# === NFtables configuration =====================================================
 info "Configuring nftables firewall."
 
 NFTABLES_CONF="/etc/nftables.conf"
@@ -996,8 +1004,8 @@ if confirm "Do you want to reboot the system?" "y"; then
   info "Initiating reboot."
   /sbin/shutdown -r now
 else
-  info "No reboot requested; exiting in 10 seconds."
-  sleep 10
+  info "No reboot requested; exiting in 3 seconds."
+  sleep 3
   info "Exiting installer without reboot."
 fi
 
