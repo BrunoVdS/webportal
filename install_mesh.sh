@@ -4,7 +4,7 @@
 
     ###                       NEW NODE INSTALL SCRIPT                            ###
 
-    ###          Version 1.0                                                     ###
+    ###          Version 1.2                                                     ###
 
     # ==============================================================================
 
@@ -57,6 +57,7 @@ error() {
 command_exists() { command -v "$1" >/dev/null ; }
 SYSTEMCTL=$(command -v systemctl || true)
 
+  # === Attended or unattended install funtion
 usage() {
   cat <<'EOF'
 Usage: install_mesh.sh [--attended | --unattended]
@@ -106,6 +107,7 @@ parse_cli_args() {
   done
 }
 
+  # === Network_manager helpers
 ensure_network_manager_ready() {
   local nmcli_bin
   nmcli_bin=$(command -v nmcli || true)
@@ -160,6 +162,7 @@ declare -A SYSTEMD_UNIT_CONTENTS=()
 declare -a SYSTEMD_ENABLE_QUEUE=()
 declare -a SYSTEMD_START_QUEUE=()
 
+  # === Systemd services helpers
 register_systemd_unit() {
   local unit_name="$1"
   local content
@@ -214,6 +217,7 @@ apply_systemd_configuration() {
   fi
 }
 
+  # === VENV helper
 create_venv_service() {
   local name="$1" venv_dir="$2" service_name="$3"
   shift 3
@@ -244,7 +248,7 @@ create_venv_service() {
 }
 
 
-# === Post-install verification helpers ==========================================
+  # === Post-install verification helpers
 log_apt_package_versions() {
   local pkg version status
   for pkg in "$@"; do
@@ -300,13 +304,13 @@ log_installation_summary() {
 
   info "System summary: OS=${os_name}, Kernel=${kernel_version}."
 
-  # Apt packages installed by this script
+    # Apt packages installed by this script
   if declare -p PACKAGES >/dev/null 2>&1; then
     apt_packages+=("${PACKAGES[@]}")
   fi
   log_apt_package_versions "${apt_packages[@]}"
 
-  # Python packages installed in virtual environments
+    # Python packages installed in virtual environments
   rns_pip="${RNS_VENV_DIR:-/opt/reticulum-venv}/bin/pip"
   meshtastic_pip="${MESHTASTIC_VENV_DIR:-/opt/meshtastic-venv}/bin/pip"
   flask_pip="${FLASK_VENV_DIR:-/opt/flask-venv}/bin/pip"
@@ -321,7 +325,7 @@ log_installation_summary() {
   fi
 
   # Services created/managed by this script
-  log_service_status mesh rnsd meshtasticd flask-app mediamtx nftables nginx
+  log_service_status mesh rnsd meshtasticd flask-app tailscale mediamtx nftables nginx
 }
 
 
@@ -467,6 +471,8 @@ validate_ipv4_cidr() {
   return 0
 }
 
+
+# === Attended or unattended global settings =====================================================
 INTERACTIVE_MODE=1
 
 gather_configuration() {
@@ -516,7 +522,7 @@ gather_configuration() {
   : "${AP_PSK:=SuperSecret123}"
   : "${AP_CHANNEL:=6}"
   : "${AP_COUNTRY:=BE}"
-  : "${AP_IP_CIDR:=10.10.10.1/24}"
+  : "${AP_IP_CIDR:=10.42.10.1/24}"
 
   if [ $interactive -eq 1 ]; then
     info "Gathering mesh configuration."
@@ -614,8 +620,8 @@ EOF
   info "Saved configuration to $CONFIG_FILE."
 }
 
-
 parse_cli_args "$@"
+
 
   # === Root only
 if [[ $EUID -ne 0 ]]; then
@@ -635,25 +641,23 @@ exec 3>&1
 exec >>"$LOGFILE" 2>&1
 
 
-  # First logs added
+    # First logs added
 info "================================================="
 info "===                                           ==="
 info "===    Installation of the Mesh Radio v1.0.   ==="
 info "===                                           ==="
 info "================================================="
 
-  # Add system info
+    # Add system info
 info "Summary: OS=${RPI_OS_PRETTY_NAME:-$(. /etc/os-release; echo $PRETTY_NAME)}, Kernel=$(uname -r)"
 
-  #add some info that before did not got logged,
+    # Add some info that before did not got logged
 info "Log file created."
 info "Log file location: $LOGFILE"
 
 info "Installer running in ${INSTALL_MODE} mode."
 
-info "Detected operating system: ${RPI_OS_PRETTY_NAME:-unknown}."
-
-  # Add we are root
+    # Add we are root
 info "Confirmed running as root."
 
 
@@ -997,10 +1001,18 @@ chown -R "$FLASK_USER":"$FLASK_GROUP" "$FLASK_APP_DIR"
 
 info "Flask application environment configured and service queued for activation."
 
+apply_systemd_configuration
+
+sleep 5
+
+
+
+
+
 # === MediaMTX streaming server ==================================================
 info "Installing MediaMTX streaming server."
 
-MEDIAMTX_VERSION="${MEDIAMTX_VERSION:-v1.9.3}"
+MEDIAMTX_VERSION="${MEDIAMTX_VERSION:-v1.15.2}"
 MEDIAMTX_BINARY="/usr/local/bin/mediamtx"
 MEDIAMTX_DATA_DIR="/var/lib/mediamtx"
 
