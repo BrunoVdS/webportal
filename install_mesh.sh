@@ -540,6 +540,55 @@ systemctl start rnsd
 info "Reticulum installed."
 
 
+# === Meshtastic CLI =======================================================
+info "Installing Meshtastic CLI."
+
+MESHTASTIC_VENV_DIR="/opt/meshtastic-venv"
+
+if [ ! -d "$MESHTASTIC_VENV_DIR" ]; then
+  python3 -m venv "$MESHTASTIC_VENV_DIR"
+  info "Created virtual environment in $MESHTASTIC_VENV_DIR"
+else
+  info "Using existing virtual environment in $MESHTASTIC_VENV_DIR"
+fi
+
+"$MESHTASTIC_VENV_DIR/bin/pip" install --upgrade pip wheel
+"$MESHTASTIC_VENV_DIR/bin/pip" install --upgrade meshtastic
+
+for cli_tool in meshtastic meshtasticd; do
+  cli_path="$MESHTASTIC_VENV_DIR/bin/$cli_tool"
+  if [ -f "$cli_path" ] && [ -x "$cli_path" ]; then
+    ln -sf "$cli_path" "/usr/local/bin/$cli_tool"
+  fi
+done
+
+info "Meshtastic CLI installed in isolated virtual environment."
+
+
+# === Meshtastic systemd service ================================================
+info "Configuring Meshtastic systemd service."
+
+cat <<'EOF' > /etc/systemd/system/meshtasticd.service
+[Unit]
+Description=Meshtastic Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/meshtasticd
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable meshtasticd
+systemctl restart meshtasticd
+
+info "Meshtastic service enabled."
+
+
 # === Firewall (nftables) =====================================================
 info "Configuring nftables firewall."
 
