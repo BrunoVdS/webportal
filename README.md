@@ -10,6 +10,9 @@ The config file is located ~/.reticulum
 
 A custom config file is included in this repository.
 
+# Meshtastic CLI installation
+Meshtastic is installed into a dedicated virtual environment at `/opt/meshtastic-venv` so the packaged CLI tools stay isolated from the system Python. The installer upgrades `pip` and `wheel` inside that environment, installs the `meshtastic` package, and publishes the `meshtastic` and `meshtasticd` command-line tools via symlinks in `/usr/local/bin`. A `meshtasticd` systemd service is also provisioned so the daemon starts automatically after boot.
+
 # Access point (AP on wlan0)
 Building access point on erry Pi's wifi(wlan0).
 
