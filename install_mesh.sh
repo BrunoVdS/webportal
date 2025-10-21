@@ -397,6 +397,27 @@ die() {
   exit 1
 }
 
+validate_ipv4_cidr() {
+  local cidr="$1" ip prefix o1 o2 o3 o4 octet
+
+  [[ "$cidr" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]{1,2})$ ]] || return 1
+
+  IFS=/ read -r ip prefix <<<"$cidr"
+  IFS=. read -r o1 o2 o3 o4 <<<"$ip"
+
+  for octet in "$o1" "$o2" "$o3" "$o4"; do
+    if ! [[ "$octet" =~ ^[0-9]+$ ]] || [ "$octet" -lt 0 ] || [ "$octet" -gt 255 ]; then
+      return 1
+    fi
+  done
+
+  if ! [[ "$prefix" =~ ^[0-9]+$ ]] || [ "$prefix" -lt 0 ] || [ "$prefix" -gt 32 ]; then
+    return 1
+  fi
+
+  return 0
+}
+
 INTERACTIVE_MODE=1
 
 gather_configuration() {
@@ -441,6 +462,7 @@ gather_configuration() {
   : "${AP_PSK:=SuperSecret123}"
   : "${AP_CHANNEL:=6}"
   : "${AP_COUNTRY:=BE}"
+  : "${AP_IP_CIDR:=10.10.10.1/24}"
 
   if [ $interactive -eq 1 ]; then
     info "Gathering mesh configuration."
@@ -476,6 +498,14 @@ gather_configuration() {
     done
 
     ask "Wi-Fi country code (REGDOM, e.g., BE/NL/DE)" "$AP_COUNTRY" AP_COUNTRY
+
+    while :; do
+      ask "Access point IP/CIDR on wlan0" "$AP_IP_CIDR" AP_IP_CIDR
+      if validate_ipv4_cidr "$AP_IP_CIDR"; then
+        break
+      fi
+      warn "Enter an IPv4 address in CIDR notation (e.g., 10.10.10.1/24)."
+    done
   else
     info "Running in unattended mode; using configuration defaults for mesh and access point."
   fi
@@ -490,6 +520,10 @@ gather_configuration() {
 
   if (( ${#AP_PSK} < 8 || ${#AP_PSK} > 63 )); then
     die "Access point WPA2 password must be 8-63 characters. Update $CONFIG_FILE or rerun interactively."
+  fi
+
+  if ! validate_ipv4_cidr "$AP_IP_CIDR"; then
+    die "Access point IP/CIDR '$AP_IP_CIDR' is invalid. Update $CONFIG_FILE or rerun interactively."
   fi
 
   case "$AP_CHANNEL" in
@@ -520,6 +554,7 @@ AP_SSID="$AP_SSID"
 AP_PSK="$AP_PSK"
 AP_CHANNEL="$AP_CHANNEL"
 AP_COUNTRY="$AP_COUNTRY"
+AP_IP_CIDR="$AP_IP_CIDR"
 EOF
 
   info "Saved configuration to $CONFIG_FILE."
@@ -970,6 +1005,7 @@ if [ $INTERACTIVE_MODE -eq 1 ]; then
   echo "  SSID        : $AP_SSID"
   echo "  WPA2 PSK    : (hidden for security)"
   echo "  Channel     : $AP_CHANNEL"
+  echo "  IPv4/CIDR   : $AP_IP_CIDR"
   echo "  Country code: $AP_COUNTRY"
   echo
 fi
@@ -1047,6 +1083,15 @@ nmcli connection modify "${AP_SSID}" \
   wifi-sec.psk "${AP_PSK}" \
   connection.autoconnect yes \
   wifi.cloned-mac-address permanent
+
+if [ -n "${AP_IP_CIDR:-}" ]; then
+  nmcli connection modify "${AP_SSID}" ipv4.addresses "${AP_IP_CIDR}"
+  AP_IP_ADDR="${AP_IP_CIDR%%/*}"
+  if [ -n "$AP_IP_ADDR" ]; then
+    nmcli connection modify "${AP_SSID}" ipv4.gateway "$AP_IP_ADDR"
+  fi
+  unset AP_IP_ADDR
+fi
 
 # 6b) Channel width 20 MHz (different NM builds: try both variants)
 nmcli connection modify "${AP_SSID}" 802-11-wireless.channel-width 20mhz 2>/dev/null || \
