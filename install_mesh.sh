@@ -1009,6 +1009,94 @@ sleep 5
 
 
 
+# === Tailscale secure networking =================================================
+info "Installing Tailscale secure networking."
+
+TAILSCALE_DIST=""
+if [ -r /etc/os-release ]; then
+  # shellcheck disable=SC1091
+  . /etc/os-release
+  TAILSCALE_DIST="${VERSION_CODENAME:-}"
+  TAILSCALE_ID="${ID:-}"
+  TAILSCALE_ID_LIKE="${ID_LIKE:-}"
+fi
+
+if [ -z "$TAILSCALE_DIST" ]; then
+  TAILSCALE_DIST="$(lsb_release -cs 2>/dev/null || true)"
+fi
+
+if [ -z "$TAILSCALE_DIST" ]; then
+  die "Unable to determine distribution codename for Tailscale repository configuration."
+fi
+
+TAILSCALE_FLAVOR="debian"
+case "${TAILSCALE_ID:-}" in
+  ubuntu)
+    TAILSCALE_FLAVOR="ubuntu"
+    ;;
+  raspbian)
+    TAILSCALE_FLAVOR="raspbian"
+    ;;
+  debian)
+    TAILSCALE_FLAVOR="debian"
+    ;;
+  *)
+    if printf '%s' "${TAILSCALE_ID_LIKE:-}" | grep -qi 'ubuntu'; then
+      TAILSCALE_FLAVOR="ubuntu"
+    elif printf '%s' "${TAILSCALE_ID_LIKE:-}" | grep -qi 'raspbian'; then
+      TAILSCALE_FLAVOR="raspbian"
+    else
+      TAILSCALE_FLAVOR="debian"
+    fi
+    ;;
+esac
+
+TAILSCALE_REPO_BASE="https://pkgs.tailscale.com/stable/${TAILSCALE_FLAVOR}"
+TAILSCALE_KEYRING="/usr/share/keyrings/tailscale-archive-keyring.gpg"
+TAILSCALE_APT_SOURCE="/etc/apt/sources.list.d/tailscale.list"
+
+info "Configuring Tailscale repository (${TAILSCALE_FLAVOR}) for '${TAILSCALE_DIST}'."
+
+install -d -m 0755 /usr/share/keyrings
+curl -fsSL "${TAILSCALE_REPO_BASE}/${TAILSCALE_DIST}.gpg" -o "$TAILSCALE_KEYRING"
+chmod 0644 "$TAILSCALE_KEYRING"
+
+cat <<EOF_TAILSCALE_LIST >"$TAILSCALE_APT_SOURCE"
+deb [signed-by=$TAILSCALE_KEYRING] ${TAILSCALE_REPO_BASE} ${TAILSCALE_DIST} main
+EOF_TAILSCALE_LIST
+
+chmod 0644 "$TAILSCALE_APT_SOURCE"
+
+apt-get update -y
+apt-get install -y tailscale
+
+register_systemd_unit "tailscaled" <<'EOF'
+[Unit]
+Description=Tailscale node agent
+Documentation=https://tailscale.com/kb/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+ExecStart=/usr/sbin/tailscaled
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+queue_enable_service tailscaled
+queue_start_service tailscaled
+
+info "Tailscale installed and service configuration queued for activation."
+
+apply_systemd_configuration
+
+sleep 5
+
+
+
 # === MediaMTX streaming server ==================================================
 info "Installing MediaMTX streaming server."
 
