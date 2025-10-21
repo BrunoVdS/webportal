@@ -58,6 +58,88 @@ command_exists() { command -v "$1" >/dev/null ; }
 SYSTEMCTL=$(command -v systemctl || true)
 
 
+# === Post-install verification helpers ==========================================
+log_apt_package_versions() {
+  local pkg version status
+  for pkg in "$@"; do
+    status=$(dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null || true)
+    if printf '%s' "$status" | grep -q "install ok installed"; then
+      version=$(dpkg-query -W -f='${Version}' "$pkg" 2>/dev/null || true)
+      info "Package '$pkg' installed (version ${version:-unknown})."
+    else
+      warn "Package '$pkg' is not installed."
+    fi
+  done
+}
+
+log_python_package_version() {
+  local pip_path="$1" package="$2" label="${3:-$2}" version
+  if [ -x "$pip_path" ]; then
+    version=$("$pip_path" show "$package" 2>/dev/null | awk '/^Version:/{print $2; exit}' || true)
+    if [ -n "$version" ]; then
+      info "$label package '$package' installed (version $version)."
+    else
+      warn "$label package '$package' not found via ${pip_path%.*/pip}."
+    fi
+  else
+    warn "pip executable '$pip_path' missing; cannot determine version for $label."
+  fi
+}
+
+log_service_status() {
+  local service active enabled
+  if [ -z "$SYSTEMCTL" ]; then
+    warn "systemctl not available; skipping service status logging."
+    return
+  fi
+
+  for service in "$@"; do
+    if systemctl list-unit-files "${service}.service" >/dev/null 2>&1; then
+      active=$(systemctl is-active "${service}.service" 2>/dev/null || true)
+      enabled=$(systemctl is-enabled "${service}.service" 2>/dev/null || true)
+      info "Service ${service}.service status: active=$active, enabled=$enabled."
+    else
+      warn "Service ${service}.service not found."
+    fi
+  done
+}
+
+log_installation_summary() {
+  local os_name kernel_version
+  local -a apt_packages=()
+  local rns_pip meshtastic_pip flask_pip
+
+  os_name=${RPI_OS_PRETTY_NAME:-$(. /etc/os-release; echo $PRETTY_NAME)}
+  kernel_version=$(uname -r)
+
+  info "System summary: OS=${os_name}, Kernel=${kernel_version}."
+
+  # Apt packages installed by this script
+  if declare -p PACKAGES >/dev/null 2>&1; then
+    apt_packages+=("${PACKAGES[@]}")
+  fi
+  apt_packages+=(nginx)
+  log_apt_package_versions "${apt_packages[@]}"
+
+  # Python packages installed in virtual environments
+  rns_pip="${RNS_VENV_DIR:-/opt/reticulum-venv}/bin/pip"
+  meshtastic_pip="${MESHTASTIC_VENV_DIR:-/opt/meshtastic-venv}/bin/pip"
+  flask_pip="${FLASK_VENV_DIR:-/opt/flask-venv}/bin/pip"
+
+  log_python_package_version "$rns_pip" "rns" "Reticulum"
+  log_python_package_version "$meshtastic_pip" "meshtastic" "Meshtastic CLI"
+  log_python_package_version "$flask_pip" "flask" "Flask"
+  log_python_package_version "$flask_pip" "gunicorn" "Gunicorn"
+
+  if command_exists batctl; then
+    info "batctl detailed version: $(batctl -v | head -n1)"
+  fi
+
+  # Services created/managed by this script
+  log_service_status mesh rnsd meshtasticd flask-app nftables nginx
+}
+
+
   # === Interactive helper functions
 prompt_to_terminal() {
   local text="$1"
@@ -991,7 +1073,7 @@ info "Final cleanup complete."
 sleep 5
 
 # === Log status of all installed software ===============================================================
-info "Summary: OS=$(. /etc/os-release; echo $PRETTY_NAME), Kernel=$(uname -r), batctl=$(batctl -v | head -n1 || echo n/a)"
+log_installation_summary
 
 info "Installation complete."
 
