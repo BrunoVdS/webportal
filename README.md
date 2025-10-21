@@ -12,25 +12,27 @@ If you ever force unattended mode via the environment or other tooling, you can 
 
 # Build in features
 
-# Mesh network (bat0)
+## Mesh network (bat0)
 Creating the bat0 mesh for the nodes to connect. Node komes online when the node boots/reboots.
 
 wlan1 is configured to create a wifi mesh (bat0)
 
-# Reticulum installation
+## Reticulum installation
 The installation script provisions Reticulum inside an isolated virtual environment located at `/opt/reticulum-venv` and exposes the `rn*` command-line tools via symlinks in `/usr/local/bin`. This avoids modifying system Python packages while keeping the utilities globally accessible.
 
 The config file is located ~/.reticulum
 
 A custom config file is included in this repository.
 
-# Meshtastic CLI installation
+## Meshtastic CLI installation
 Meshtastic is installed into a dedicated virtual environment at `/opt/meshtastic-venv` so the packaged CLI tools stay isolated from the system Python. The installer upgrades `pip` and `wheel` inside that environment, installs the `meshtastic` package, and publishes the `meshtastic` and `meshtasticd` command-line tools via symlinks in `/usr/local/bin`. A `meshtasticd` systemd service is also provisioned so the daemon starts automatically after boot.
 
-# Access point (AP on wlan0)
+## Flask
+
+## Access point (AP on wlan0)
 Building access point on erry Pi's wifi(wlan0).
 
-# Webportal
+## Webportal
 Creating webportal with different functions:
   - Download server (software & manuals)
   - Display mesh staus
