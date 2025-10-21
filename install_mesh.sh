@@ -59,6 +59,26 @@ SYSTEMCTL=$(command -v systemctl || true)
 
 
   # === Interactive helper functions
+prompt_to_terminal() {
+  local text="$1"
+  if [ -w /dev/tty ]; then
+    printf '%s' "$text" >/dev/tty
+  elif [ -e /proc/$$/fd/3 ]; then
+    printf '%s' "$text" >&3
+  else
+    printf '%s' "$text"
+  fi
+}
+
+prompt_read() {
+  local -a args=("$@")
+  if [ -r /dev/tty ]; then
+    IFS= read "${args[@]}" </dev/tty
+  else
+    IFS= read "${args[@]}"
+  fi
+}
+
 ask() {
   local prompt="$1"
   local default_value="${2-}"
@@ -71,7 +91,8 @@ ask() {
     prompt_text="$prompt: "
   fi
 
-  read -r -p "$prompt_text" input || return 1
+  prompt_to_terminal "$prompt_text"
+  prompt_read -r input || return 1
   input="${input:-$default_value}"
 
   if [ -n "$var_name" ]; then
@@ -93,8 +114,9 @@ ask_hidden() {
     prompt_text="$prompt: "
   fi
 
-  read -rs -p "$prompt_text" input || return 1
-  echo
+  prompt_to_terminal "$prompt_text"
+  prompt_read -rs input || return 1
+  prompt_to_terminal $'\n'
   input="${input:-$default_value}"
 
   if [ -n "$var_name" ]; then
@@ -131,7 +153,8 @@ confirm() {
   fi
 
   while :; do
-    read -r -p "$prompt $suffix " reply || return 1
+    prompt_to_terminal "$prompt $suffix "
+    prompt_read -r reply || return 1
     if [ -n "$default_choice" ] && [ -z "$reply" ]; then
       reply="$default_choice"
     fi
@@ -144,7 +167,8 @@ confirm() {
         return 1
         ;;
       *)
-        echo "Please answer with 'y' or 'n'."
+        prompt_to_terminal "Please answer with 'y' or 'n'."
+        prompt_to_terminal $'\n'
         ;;
     esac
   done
