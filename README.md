@@ -1,3 +1,4 @@
+# Installation of the script
 ## Installer interaction mode
 
 The `install_mesh.sh` script now always starts in attended (interactive) mode so you can review and confirm every configuration value. When a fully automated run is needed, pass the `--unattended` flag (or set `UNATTENDED_INSTALL=1` in the environment) to skip the prompts and rely on the existing `/etc/default/mesh.conf` defaults:
@@ -9,7 +10,7 @@ sudo ./install_mesh.sh --unattended
 If you ever force unattended mode via the environment or other tooling, you can explicitly return to the interactive workflow with `--attended`.
 
 
-
+# Build in features
 
 # Mesh network (bat0)
 Creating the bat0 mesh for the nodes to connect. Node komes online when the node boots/reboots.
