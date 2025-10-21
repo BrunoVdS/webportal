@@ -321,7 +321,7 @@ log_installation_summary() {
   fi
 
   # Services created/managed by this script
-  log_service_status mesh rnsd meshtasticd flask-app nftables nginx
+  log_service_status mesh rnsd meshtasticd flask-app mediamtx nftables nginx
 }
 
 
@@ -703,6 +703,7 @@ PACKAGES=(
   wireless-regdb
   nftables
   network-manager
+  curl
   nginx
   php-cli
   php-fpm
@@ -995,6 +996,63 @@ fi
 chown -R "$FLASK_USER":"$FLASK_GROUP" "$FLASK_APP_DIR"
 
 info "Flask application environment configured and service queued for activation."
+
+# === MediaMTX streaming server ==================================================
+info "Installing MediaMTX streaming server."
+
+MEDIAMTX_VERSION="${MEDIAMTX_VERSION:-v1.9.3}"
+MEDIAMTX_BINARY="/usr/local/bin/mediamtx"
+MEDIAMTX_DATA_DIR="/var/lib/mediamtx"
+
+MEDIAMTX_ARCH="$(dpkg --print-architecture)"
+case "$MEDIAMTX_ARCH" in
+  amd64)
+    MEDIAMTX_RELEASE_ARCH="amd64"
+    ;;
+  arm64)
+    MEDIAMTX_RELEASE_ARCH="arm64v8"
+    ;;
+  armhf)
+    MEDIAMTX_RELEASE_ARCH="arm32v7"
+    ;;
+  *)
+    die "Unsupported architecture '$MEDIAMTX_ARCH' for MediaMTX installation."
+    ;;
+esac
+
+MEDIAMTX_TARBALL="mediamtx_${MEDIAMTX_VERSION}_linux_${MEDIAMTX_RELEASE_ARCH}.tar.gz"
+MEDIAMTX_URL="https://github.com/bluenviron/mediamtx/releases/download/${MEDIAMTX_VERSION}/${MEDIAMTX_TARBALL}"
+MEDIAMTX_TMPDIR="$(mktemp -d)"
+
+info "Downloading MediaMTX (${MEDIAMTX_VERSION}) for ${MEDIAMTX_ARCH}."
+curl -fsSL "$MEDIAMTX_URL" -o "$MEDIAMTX_TMPDIR/$MEDIAMTX_TARBALL"
+
+tar -xzf "$MEDIAMTX_TMPDIR/$MEDIAMTX_TARBALL" -C "$MEDIAMTX_TMPDIR"
+install -m 0755 -o root -g root "$MEDIAMTX_TMPDIR/mediamtx" "$MEDIAMTX_BINARY"
+install -d -m 0755 -o root -g root "$MEDIAMTX_DATA_DIR"
+
+rm -rf "$MEDIAMTX_TMPDIR"
+
+register_systemd_unit "mediamtx" <<'EOF'
+[Unit]
+Description=MediaMTX Streaming Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/mediamtx
+WorkingDirectory=/var/lib/mediamtx
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+queue_enable_service mediamtx
+queue_start_service mediamtx
+
+info "MediaMTX installed and service configuration queued for activation."
 
 apply_systemd_configuration
 
