@@ -931,6 +931,7 @@ table inet filter {
     iif lo accept
     ct state established,related accept
     iifname "wlan0" tcp dport {22,80,443} accept
+    iifname "eth0" tcp dport 22 accept
     iifname "bat0" tcp dport 4242 accept
     iifname "bat0" udp dport 4960 accept
   }
