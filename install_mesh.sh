@@ -57,6 +57,54 @@ error() {
 command_exists() { command -v "$1" >/dev/null ; }
 SYSTEMCTL=$(command -v systemctl || true)
 
+ensure_network_manager_ready() {
+  local nmcli_bin
+  nmcli_bin=$(command -v nmcli || true)
+
+  if [[ -z "$nmcli_bin" ]]; then
+    error "NetworkManager (nmcli) is not installed. Install the 'network-manager' package before running the access point setup."
+    return 1
+  fi
+
+  if [[ -z "$SYSTEMCTL" ]]; then
+    error "systemctl is not available; cannot manage NetworkManager."
+    return 1
+  fi
+
+  if ! "$SYSTEMCTL" show NetworkManager >/dev/null 2>&1; then
+    error "NetworkManager service is not available. Install and enable 'network-manager' before continuing."
+    return 1
+  fi
+
+  if ! "$SYSTEMCTL" is-active --quiet NetworkManager; then
+    warn "NetworkManager service is not active; attempting to start it."
+    if ! "$SYSTEMCTL" start NetworkManager >/dev/null 2>&1; then
+      error "Failed to start NetworkManager service."
+      return 1
+    fi
+  fi
+
+  return 0
+}
+
+wait_for_wlan_network_details() {
+  local attempt ip subnet
+  for ((attempt=1; attempt<=10; attempt++)); do
+    ip=$(ip -4 addr show dev wlan0 | awk '/inet /{print $2}' | cut -d/ -f1 | head -n1 || true)
+    subnet=$(ip -4 route show dev wlan0 | awk '/proto kernel/ {print $1}' | head -n1 || true)
+    if [[ -n "$ip" && -n "$subnet" ]]; then
+      WLAN_IP="$ip"
+      AP_SUBNET="$subnet"
+      return 0
+    fi
+    sleep 3
+  done
+
+  WLAN_IP="${ip:-}"
+  AP_SUBNET="${subnet:-}"
+  return 1
+}
+
 
   # === Interactive helper functions
 prompt_to_terminal() {
@@ -259,6 +307,7 @@ PACKAGES=(
   iproute2
   wireless-regdb
   nftables
+  network-manager
 )
 
 info "Starting package installation."
@@ -759,6 +808,10 @@ confirm "Remove all existing Wi-Fi profiles before continuing?" || CLEAN=false
 echo
 confirm "Proceed with access point configuration?" || die "Operation cancelled by user."
 
+if ! ensure_network_manager_ready; then
+  die "Access point setup requires NetworkManager (nmcli). Please install and enable 'network-manager' before rerunning."
+fi
+
 # 1) Persist and apply country code
 log "Setting country code to ${COUNTRY}..."
 if command -v raspi-config >/dev/null 2>&1; then
@@ -790,7 +843,7 @@ EOF
 
 # 4) Restart NetworkManager
 log "Restarting NetworkManager..."
-systemctl restart NetworkManager
+"$SYSTEMCTL" restart NetworkManager
 sleep 2
 
 # 5) Clean up
@@ -854,16 +907,19 @@ if [ $RC -ne 0 ]; then
 fi
 set -e
 
+if ! wait_for_wlan_network_details; then
+  die "Unable to detect wlan0 IPv4 details after waiting for NetworkManager. Access point setup cannot continue."
+fi
+
 echo
 nmcli -f DEVICE,TYPE,STATE,CONNECTION device status | sed 's/^/    /'
-IP4="$(ip -4 addr show dev wlan0 | awk '/inet /{print $2}')"
 echo
 
 if nmcli -t -f GENERAL.STATE connection show "${SSID}" >/dev/null 2>&1; then
   echo "[OK] Completed. SSID: ${SSID}"
   echo "   WPA2 password: (still hidden for security)"
   echo "   Channel: ${CHANNEL}"
-  echo "   Device IP on wlan0: ${IP4:-(no IPv4 address detected yet)}"
+  echo "   Device IP on wlan0: ${WLAN_IP:-(no IPv4 address detected yet)}"
   echo
   echo "Helpful commands:"
   echo "  - Change channel: nmcli con mod \"${SSID}\" 802-11-wireless.channel 1 && nmcli con up \"${SSID}\""
@@ -884,9 +940,7 @@ sleep 5
 
 info "Installing web server."
 
-WLAN_IP=$(ip -4 addr show wlan0 | awk '/inet /{print $2}' | cut -d/ -f1 | head -n1 || true)
-AP_SUBNET=$(ip -4 route show dev wlan0 | awk '/proto kernel/ {print $1}' | head -n1 || true)
-[[ -n "${WLAN_IP}" ]] || log "[WARNING] Could not detect an IP on wlan0 yet. Assuming NetworkManager will provide one shortly."
+log "Detected wlan0 IPv4 address ${WLAN_IP} on subnet ${AP_SUBNET}."
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 WEB_ROOT="/var/www/server"
