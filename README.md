@@ -33,3 +33,13 @@ Creating webportal with different functions:
 ## Features
 * Use a client-side astronomical algorithm (e.g., the NOAA Solar Calculator or the U.S. Naval Observatory algorithm) that accepts latitude, longitude, date, and timezone. These formulas are well-documented and easy to implement in JavaScript. To gather location data, we are using the android or iOS phone/tablet GSP location. If no loctaion is found, no automation.
 * Create a local webadress so users do not have to use the IP to connect to the website.
+
+## Installer interaction mode
+
+The `install_mesh.sh` script now always starts in attended (interactive) mode so you can review and confirm every configuration value. When a fully automated run is needed, pass the `--unattended` flag (or set `UNATTENDED_INSTALL=1` in the environment) to skip the prompts and rely on the existing `/etc/default/mesh.conf` defaults:
+
+```bash
+sudo ./install_mesh.sh --unattended
+```
+
+If you ever force unattended mode via the environment or other tooling, you can explicitly return to the interactive workflow with `--attended`.
