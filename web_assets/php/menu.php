@@ -12,6 +12,7 @@
       <li><a href="index.php">Home</a></li>
       <li><a href="downloads.php">Downloads</a></li>
       <li><a href="mesh.php">Mesh</a></li>
+      <li><a href="system_status.php">System status</a></li>
     </ul>
   </div>
 </nav>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta
       name="description"
-      content="Access Node portal,mesh info and download server."
+      content="Access Node portal, mesh info and download server."
     >
     <title>Node LAN portal</title>
     <link rel="stylesheet" href="styles.css">
@@ -17,11 +17,12 @@
       <header class="page-hero">
         <h1>Welcome to the Node LAN-portal</h1>
         <p class="hero-summary">
-          Your hub for software downloads, node status and mesh netwok info.
+          Your hub for software downloads, node status and mesh network info.
         </p>
         <div class="hero-actions">
           <a class="button" href="downloads.php">Browse downloads</a>
           <a class="button" href="mesh.php">Explore mesh resources</a>
+          <a class="button" href="system_status.php">View system status</a>
         </div>
       </header>
 
@@ -45,7 +46,10 @@
           Ready to dive straight into the repository? Jump directly to the full directory
           listing to locate a specific image or asset.
         </p>
-        <a class="button" href="/files/">View files directory</a>
+        <div class="quick-links">
+          <a class="button" href="/files/">View files directory</a>
+          <a class="button" href="system_status.php">Check system services</a>
+        </div>
       </section>
     </main>
 
