@@ -105,6 +105,95 @@ wait_for_wlan_network_details() {
   return 1
 }
 
+CONFIG_FILE="/etc/default/mesh.conf"
+
+declare -A SYSTEMD_UNIT_CONTENTS=()
+declare -a SYSTEMD_ENABLE_QUEUE=()
+declare -a SYSTEMD_START_QUEUE=()
+
+register_systemd_unit() {
+  local unit_name="$1"
+  local content
+  content="$(cat)"
+  SYSTEMD_UNIT_CONTENTS["$unit_name"]="$content"
+}
+
+queue_enable_service() {
+  SYSTEMD_ENABLE_QUEUE+=("$1")
+}
+
+queue_start_service() {
+  SYSTEMD_START_QUEUE+=("$1")
+}
+
+apply_systemd_configuration() {
+  local unit
+
+  if [ "${#SYSTEMD_UNIT_CONTENTS[@]}" -eq 0 ]; then
+    return
+  fi
+
+  for unit in "${!SYSTEMD_UNIT_CONTENTS[@]}"; do
+    printf '%s\n' "${SYSTEMD_UNIT_CONTENTS[$unit]}" >"/etc/systemd/system/${unit}.service"
+  done
+
+  if [ -z "$SYSTEMCTL" ]; then
+    warn "systemctl not available; created unit files but could not enable/start services."
+    return
+  fi
+
+  "$SYSTEMCTL" daemon-reload
+
+  if [ "${#SYSTEMD_ENABLE_QUEUE[@]}" -gt 0 ]; then
+    local -A enabled_seen=()
+    for unit in "${SYSTEMD_ENABLE_QUEUE[@]}"; do
+      if [ -z "${enabled_seen[$unit]+x}" ]; then
+        "$SYSTEMCTL" enable "$unit"
+        enabled_seen["$unit"]=1
+      fi
+    done
+  fi
+
+  if [ "${#SYSTEMD_START_QUEUE[@]}" -gt 0 ]; then
+    local -A started_seen=()
+    for unit in "${SYSTEMD_START_QUEUE[@]}"; do
+      if [ -z "${started_seen[$unit]+x}" ]; then
+        "$SYSTEMCTL" restart "$unit"
+        started_seen["$unit"]=1
+      fi
+    done
+  fi
+}
+
+create_venv_service() {
+  local name="$1" venv_dir="$2" service_name="$3"
+  shift 3
+  local -a packages=("$@")
+
+  info "Setting up ${name} virtual environment at ${venv_dir}."
+
+  if [ ! -d "$venv_dir" ]; then
+    python3 -m venv "$venv_dir"
+    info "Created virtual environment in $venv_dir"
+  else
+    info "Using existing virtual environment in $venv_dir"
+  fi
+
+  "$venv_dir/bin/pip" install --upgrade pip wheel
+
+  if [ "${#packages[@]}" -gt 0 ]; then
+    "$venv_dir/bin/pip" install --upgrade "${packages[@]}"
+  fi
+
+  local unit_content
+  unit_content="$(cat)"
+  SYSTEMD_UNIT_CONTENTS["$service_name"]="$unit_content"
+  queue_enable_service "$service_name"
+  queue_start_service "$service_name"
+
+  info "Queued ${service_name}.service for enablement."
+}
+
 
 # === Post-install verification helpers ==========================================
 log_apt_package_versions() {
@@ -166,7 +255,6 @@ log_installation_summary() {
   if declare -p PACKAGES >/dev/null 2>&1; then
     apt_packages+=("${PACKAGES[@]}")
   fi
-  apt_packages+=(nginx)
   log_apt_package_versions "${apt_packages[@]}"
 
   # Python packages installed in virtual environments
@@ -309,6 +397,134 @@ die() {
   exit 1
 }
 
+INTERACTIVE_MODE=1
+
+gather_configuration() {
+  local interactive=1
+  if [ "${UNATTENDED_INSTALL:-0}" -eq 1 ] || [ ! -t 0 ] || [ ! -t 1 ]; then
+    interactive=0
+  fi
+
+  if [ -r "$CONFIG_FILE" ]; then
+    info "Loading configuration defaults from $CONFIG_FILE"
+    # shellcheck disable=SC1091
+    . "$CONFIG_FILE"
+  fi
+
+  : "${MESH_ID:=MYMESH}"
+  : "${IFACE:=wlan1}"
+  : "${IP_CIDR:=192.168.0.1/24}"
+  : "${COUNTRY:=BE}"
+  : "${FREQ:=5180}"
+  : "${BANDWIDTH:=HT20}"
+  : "${MTU:=1468}"
+  : "${BSSID:=02:12:34:56:78:9A}"
+
+  if [ -n "${SSID:-}" ] && [ -z "${AP_SSID:-}" ]; then
+    AP_SSID="$SSID"
+  fi
+  if [ -n "${PSK:-}" ] && [ -z "${AP_PSK:-}" ]; then
+    AP_PSK="$PSK"
+  fi
+  if [ -n "${CHANNEL:-}" ] && [ -z "${AP_CHANNEL:-}" ]; then
+    AP_CHANNEL="$CHANNEL"
+  fi
+  if [ -n "${AP_COUNTRY:-}" ]; then
+    :
+  elif [ -n "${WIFI_COUNTRY:-}" ]; then
+    AP_COUNTRY="$WIFI_COUNTRY"
+  else
+    AP_COUNTRY="${COUNTRY:-BE}"
+  fi
+
+  : "${AP_SSID:=MyPiAP}"
+  : "${AP_PSK:=SuperSecret123}"
+  : "${AP_CHANNEL:=6}"
+  : "${AP_COUNTRY:=BE}"
+
+  if [ $interactive -eq 1 ]; then
+    info "Gathering mesh configuration."
+    ask "Mesh ID" "$MESH_ID" MESH_ID
+    ask "Wireless interface" "$IFACE" IFACE
+    ask "Node IP/CIDR on bat0" "$IP_CIDR" IP_CIDR
+    ask "Country code (regdom)" "$COUNTRY" COUNTRY
+    ask "Frequency (MHz for 5GHz, or 2412/2437/2462 etc.)" "$FREQ" FREQ
+    ask "Bandwidth" "$BANDWIDTH" BANDWIDTH
+    ask "MTU for bat0" "$MTU" MTU
+    ask "IBSS fallback BSSID" "$BSSID" BSSID
+
+    info "Gathering access point configuration."
+    ask "SSID (name of your Wi-Fi)" "$AP_SSID" AP_SSID
+    while :; do
+      ask_hidden "WPA2 password (8-63 characters)" "$AP_PSK" AP_PSK
+      if (( ${#AP_PSK}>=8 && ${#AP_PSK}<=63 )); then
+        break
+      fi
+      warn "Password must be 8-63 characters. Please try again."
+    done
+
+    while :; do
+      ask "Channel (1, 6, or 11)" "$AP_CHANNEL" AP_CHANNEL
+      case "$AP_CHANNEL" in
+        1|6|11)
+          break
+          ;;
+        *)
+          warn "Invalid channel. Choose 1, 6, or 11."
+          ;;
+      esac
+    done
+
+    ask "Wi-Fi country code (REGDOM, e.g., BE/NL/DE)" "$AP_COUNTRY" AP_COUNTRY
+  else
+    info "Running in unattended mode; using configuration defaults for mesh and access point."
+  fi
+
+  AP_COUNTRY=$(printf '%s' "$AP_COUNTRY" | tr '[:lower:]' '[:upper:]')
+  if ! [[ "$AP_COUNTRY" =~ ^[A-Z]{2}$ ]]; then
+    if [ $interactive -eq 1 ]; then
+      warn "Unrecognized country code. Falling back to 'BE'."
+    fi
+    AP_COUNTRY="BE"
+  fi
+
+  if (( ${#AP_PSK} < 8 || ${#AP_PSK} > 63 )); then
+    die "Access point WPA2 password must be 8-63 characters. Update $CONFIG_FILE or rerun interactively."
+  fi
+
+  case "$AP_CHANNEL" in
+    1|6|11)
+      ;;
+    *)
+      if [ $interactive -eq 1 ]; then
+        warn "Invalid access point channel '$AP_CHANNEL'. Using default channel 6."
+      fi
+      AP_CHANNEL=6
+      ;;
+  esac
+
+  INTERACTIVE_MODE=$interactive
+
+  install -m 0644 -o root -g root /dev/null "$CONFIG_FILE"
+  cat >"$CONFIG_FILE" <<EOF
+MESH_ID="$MESH_ID"
+IFACE="$IFACE"
+IP_CIDR="$IP_CIDR"
+COUNTRY="$COUNTRY"
+FREQ="$FREQ"
+BANDWIDTH="$BANDWIDTH"
+MTU="$MTU"
+BSSID="$BSSID"
+BATIF="bat0"
+AP_SSID="$AP_SSID"
+AP_PSK="$AP_PSK"
+AP_CHANNEL="$AP_CHANNEL"
+AP_COUNTRY="$AP_COUNTRY"
+EOF
+
+  info "Saved configuration to $CONFIG_FILE."
+}
+
 
   # === Root only
 if [[ $EUID -ne 0 ]]; then
@@ -346,6 +562,10 @@ info "Detected operating system: ${RPI_OS_PRETTY_NAME:-unknown}."
 
   # Add we are root
 info "Confirmed running as root."
+
+
+  # === Configuration ===
+gather_configuration
 
 
   # === Housekeeping
@@ -390,6 +610,7 @@ PACKAGES=(
   wireless-regdb
   nftables
   network-manager
+  nginx
 )
 
 info "Starting package installation."
@@ -420,8 +641,6 @@ for pkg in "${PACKAGES[@]}"; do
 fi
 
   # === Update the system with the install of all new packages
-apt-get update -y
-
 info "Package installation complete."
 
 sleep 5
@@ -430,67 +649,6 @@ sleep 5
 info "Creating mesh network."
 
 # ---- Interactive defaults -------------------------------------------------------
-prompt_with_default() {
-  local __var_name="$1" __prompt="$2" __default="$3" __value
-  local __current_value="${!__var_name:-}"
-
-  if [ -n "$__current_value" ]; then
-    printf -v "$__var_name" '%s' "$__current_value"
-    echo "Using preset value for $__var_name: ${!__var_name}"
-    return
-  fi
-
-  if ! [ -t 0 ] && ! [ -t 1 ]; then
-    warn "No interactive terminal detected. Falling back to default for $__var_name: $__default"
-    printf -v "$__var_name" '%s' "$__default"
-    return
-  fi
-
-  while true; do
-    if [ -n "$__default" ]; then
-      printf '%s [%s]: ' "$__prompt" "$__default" > /dev/tty
-    else
-      printf '%s: ' "$__prompt" > /dev/tty
-    fi
-
-    IFS= read -r __value < /dev/tty || __value=""
-    __value="${__value:-$__default}"
-
-    if [ -n "$__value" ]; then
-      break
-    fi
-
-    warn "A value is required for $__var_name. Please try again."
-  done
-
-  printf -v "$__var_name" '%s' "$__value"
-}
-
-prompt_with_default MESH_ID "Mesh ID" "MYMESH"
-prompt_with_default IFACE "Wireless interface" "wlan1"
-prompt_with_default IP_CIDR "Node IP/CIDR on bat0" "192.168.0.1/24"
-prompt_with_default COUNTRY "Country code (regdom)" "BE"
-prompt_with_default FREQ "Frequency (MHz for 5GHz, or 2412/2437/2462 etc.)" "5180"
-prompt_with_default BANDWIDTH "Bandwidth" "HT20"
-prompt_with_default MTU "MTU for bat0" "1468"
-prompt_with_default BSSID "IBSS fallback BSSID" "02:12:34:56:78:9A"
-
-
-# ---- Config persist -------------------------------------------------------------
-install -m 0644 -o root -g root /dev/null /etc/default/mesh.conf
-cat >/etc/default/mesh.conf <<EOF
-  MESH_ID="$MESH_ID"
-  IFACE="$IFACE"
-  IP_CIDR="$IP_CIDR"
-  COUNTRY="$COUNTRY"
-  FREQ="$FREQ"
-  BANDWIDTH="$BANDWIDTH"
-  MTU="$MTU"
-  BSSID="$BSSID"
-  BATIF="bat0"
-EOF
-info "Saved mesh defaults to /etc/default/mesh.conf"
-
 # ---- Helpers -------------------------------------------------------------------
 mesh_supported() {
   iw list 2>/dev/null | awk '/Supported interface modes/{p=1} p{print} /Supported commands/{exit}' | grep -qi "mesh point"
@@ -597,7 +755,7 @@ esac
 EOF
 
 # ---- systemd service -----------------------------------------------------------
-tee /etc/systemd/system/mesh.service >/dev/null <<'EOF'
+register_systemd_unit "mesh" <<'EOF'
 [Unit]
 Description=BATMAN-adv Mesh bring-up
 After=network-online.target
@@ -613,8 +771,8 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl enable --now mesh.service
+queue_enable_service mesh
+queue_start_service mesh
 
 info "Mesh setup done. Gebruik 'meshctl status' voor je daily dosis realiteit."
 
@@ -626,15 +784,18 @@ info "Installing Reticulum."
 
 RNS_VENV_DIR="/opt/reticulum-venv"
 
-if [ ! -d "$RNS_VENV_DIR" ]; then
-  python3 -m venv "$RNS_VENV_DIR"
-  info "Created virtual environment in $RNS_VENV_DIR"
-else
-  info "Using existing virtual environment in $RNS_VENV_DIR"
-fi
+create_venv_service "Reticulum" "$RNS_VENV_DIR" "rnsd" rns <<'EOF'
+[Unit]
+Description=Reticulum Network Stack
+After=network.target
 
-"$RNS_VENV_DIR/bin/pip" install --upgrade pip wheel
-"$RNS_VENV_DIR/bin/pip" install --upgrade rns
+[Service]
+ExecStart=/usr/local/bin/rnsd
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
 
 nullglob_original=$(shopt -p nullglob || true)
 shopt -s nullglob
@@ -649,28 +810,8 @@ else
   shopt -u nullglob
 fi
 
-  # === Creating systemd service
 info "Reticulum installed in isolated virtual environment."
-
-info "Create Systemd service (automated startup)"
-tee /etc/systemd/system/rnsd.service > /dev/null <<EOF
-[Unit]
-Description=Reticulum Network Stack
-After=network.target
-
-[Service]
-ExecStart=/usr/local/bin/rnsd
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable rnsd
-systemctl start rnsd
-
-info "Reticulum installed."
+info "Reticulum service configuration queued for activation."
 
 sleep 5
 
@@ -680,30 +821,7 @@ info "Installing Meshtastic CLI."
 
 MESHTASTIC_VENV_DIR="/opt/meshtastic-venv"
 
-if [ ! -d "$MESHTASTIC_VENV_DIR" ]; then
-  python3 -m venv "$MESHTASTIC_VENV_DIR"
-  info "Created virtual environment in $MESHTASTIC_VENV_DIR"
-else
-  info "Using existing virtual environment in $MESHTASTIC_VENV_DIR"
-fi
-
-"$MESHTASTIC_VENV_DIR/bin/pip" install --upgrade pip wheel
-"$MESHTASTIC_VENV_DIR/bin/pip" install --upgrade meshtastic
-
-for cli_tool in meshtastic meshtasticd; do
-  cli_path="$MESHTASTIC_VENV_DIR/bin/$cli_tool"
-  if [ -f "$cli_path" ] && [ -x "$cli_path" ]; then
-    ln -sf "$cli_path" "/usr/local/bin/$cli_tool"
-  fi
-done
-
-info "Meshtastic CLI installed in isolated virtual environment."
-
-
-  # === Meshtastic systemd service
-info "Configuring Meshtastic systemd service."
-
-cat <<'EOF' > /etc/systemd/system/meshtasticd.service
+create_venv_service "Meshtastic CLI" "$MESHTASTIC_VENV_DIR" "meshtasticd" meshtastic <<'EOF'
 [Unit]
 Description=Meshtastic Daemon
 After=network.target
@@ -717,11 +835,15 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl enable meshtasticd
-systemctl restart meshtasticd
+for cli_tool in meshtastic meshtasticd; do
+  cli_path="$MESHTASTIC_VENV_DIR/bin/$cli_tool"
+  if [ -f "$cli_path" ] && [ -x "$cli_path" ]; then
+    ln -sf "$cli_path" "/usr/local/bin/$cli_tool"
+  fi
+done
 
-info "Meshtastic service enabled."
+info "Meshtastic CLI installed in isolated virtual environment."
+info "Meshtastic service configuration queued for activation."
 
 sleep 5
 
@@ -734,15 +856,23 @@ FLASK_APP_DIR="/opt/flask-app"
 FLASK_USER="${SUDO_USER:-root}"
 FLASK_GROUP="$(id -gn "$FLASK_USER" 2>/dev/null || echo "$FLASK_USER")"
 
-if [ ! -d "$FLASK_VENV_DIR" ]; then
-  python3 -m venv "$FLASK_VENV_DIR"
-  info "Created virtual environment in $FLASK_VENV_DIR"
-else
-  info "Using existing virtual environment in $FLASK_VENV_DIR"
-fi
+create_venv_service "Flask web application" "$FLASK_VENV_DIR" "flask-app" flask gunicorn <<EOF_FLASK
+[Unit]
+Description=Mesh Flask Web Application
+After=network.target
 
-"$FLASK_VENV_DIR/bin/pip" install --upgrade pip wheel
-"$FLASK_VENV_DIR/bin/pip" install --upgrade flask gunicorn
+[Service]
+Type=simple
+User=$FLASK_USER
+Group=$FLASK_GROUP
+WorkingDirectory=$FLASK_APP_DIR
+Environment="PATH=$FLASK_VENV_DIR/bin"
+ExecStart=$FLASK_VENV_DIR/bin/gunicorn --bind 0.0.0.0:5000 app:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF_FLASK
 
 install -d -m 0755 -o "$FLASK_USER" -g "$FLASK_GROUP" "$FLASK_APP_DIR"
 
@@ -769,29 +899,9 @@ fi
 
 chown -R "$FLASK_USER":"$FLASK_GROUP" "$FLASK_APP_DIR"
 
-cat >/etc/systemd/system/flask-app.service <<EOF_FLASK
-[Unit]
-Description=Mesh Flask Web Application
-After=network.target
+info "Flask application environment configured and service queued for activation."
 
-[Service]
-Type=simple
-User=$FLASK_USER
-Group=$FLASK_GROUP
-WorkingDirectory=$FLASK_APP_DIR
-Environment="PATH=$FLASK_VENV_DIR/bin"
-ExecStart=$FLASK_VENV_DIR/bin/gunicorn --bind 0.0.0.0:5000 app:app
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF_FLASK
-
-systemctl daemon-reload
-systemctl enable flask-app.service
-systemctl restart flask-app.service
-
-info "Flask application environment configured and service enabled."
+apply_systemd_configuration
 
 sleep 5
 
@@ -851,59 +961,37 @@ sleep 5
 
 info "Installing access point on wlan0 (AP)."
 
-SSID_D="MyPiAP"
-PSK_D="SuperSecret123"
-CHAN_D="6"      # 1,6,11 are the safest choices
-CTRY_D="BE"
-
-SSID=""; PSK=""; CHANNEL=""; COUNTRY=""
-
-ask "SSID (name of your Wi-Fi)" "$SSID_D" SSID
-
-# === WPA2 PSK validation
-while :; do
-ask_hidden "WPA2 password (8-63 characters)" "$PSK_D" PSK
-  (( ${#PSK}>=8 && ${#PSK}<=63 )) && break || echo "[ERROR] Password must be 8-63 characters. Please try again."
-done
-
-echo "Select a 2.4 GHz channel (1/6/11 are recommended; 12/13 are often unsupported by iPhones)."
-ask "Channel (1, 6, or 11)" "$CHAN_D" CHANNEL
-while ! [[ "$CHANNEL" =~ ^(1|6|11)$ ]]; do
-  echo "[ERROR] Invalid channel. Choose 1, 6, or 11."
-  ask "Channel (1, 6, or 11)" "$CHAN_D" CHANNEL
-done
-
-ask "Wi-Fi country code (REGDOM, e.g., BE/NL/DE)" "$CTRY_D" COUNTRY
-COUNTRY=$(echo "$COUNTRY" | tr '[:lower:]' '[:upper:]')
-[[ "$COUNTRY" =~ ^[A-Z]{2}$ ]] || { echo "[WARNING] Unrecognized country code. Using '$CTRY_D'."; COUNTRY="$CTRY_D"; }
-
-echo
-echo "Summary:"
-echo "  SSID     : $SSID"
-echo "  WPA2 PSK : (hidden for security)"
-echo "  Channel   : $CHANNEL"
-echo "  Country code : $COUNTRY"
-echo
+if [ $INTERACTIVE_MODE -eq 1 ]; then
+  echo
+  echo "Summary:"
+  echo "  SSID        : $AP_SSID"
+  echo "  WPA2 PSK    : (hidden for security)"
+  echo "  Channel     : $AP_CHANNEL"
+  echo "  Country code: $AP_COUNTRY"
+  echo
+fi
 
 CLEAN=true
-confirm "Remove all existing Wi-Fi profiles before continuing?" || CLEAN=false
-echo
-confirm "Proceed with access point configuration?" || die "Operation cancelled by user."
+if [ $INTERACTIVE_MODE -eq 1 ]; then
+  confirm "Remove all existing Wi-Fi profiles before continuing?" || CLEAN=false
+  echo
+  confirm "Proceed with access point configuration?" || die "Operation cancelled by user."
+fi
 
 if ! ensure_network_manager_ready; then
   die "Access point setup requires NetworkManager (nmcli). Please install and enable 'network-manager' before rerunning."
 fi
 
 # 1) Persist and apply country code
-log "Setting country code to ${COUNTRY}..."
+log "Setting country code to ${AP_COUNTRY}..."
 if command -v raspi-config >/dev/null 2>&1; then
-  raspi-config nonint do_wifi_country "${COUNTRY}" || true
+  raspi-config nonint do_wifi_country "${AP_COUNTRY}" || true
 fi
-iw reg set "${COUNTRY}" || true
+iw reg set "${AP_COUNTRY}" || true
   # === Ensure wpa_supplicant also includes the country code for consistency
 if [[ -f /etc/wpa_supplicant/wpa_supplicant.conf ]]; then
-  grep -q "^country=${COUNTRY}\b" /etc/wpa_supplicant/wpa_supplicant.conf 2>/dev/null || \
-    sed -i "1i country=${COUNTRY}" /etc/wpa_supplicant/wpa_supplicant.conf || true
+  grep -q "^country=${AP_COUNTRY}\b" /etc/wpa_supplicant/wpa_supplicant.conf 2>/dev/null || \
+    sed -i "1i country=${AP_COUNTRY}" /etc/wpa_supplicant/wpa_supplicant.conf || true
 fi
 
 # === Reload drivers (reset channel specifications/PMF quirks)
@@ -941,50 +1029,50 @@ else
 fi
 
 # 6) Create AP profile
-log "Creating AP profile: SSID='${SSID}', channel=${CHANNEL}, WPA2..."
-nmcli -t -f NAME connection show | grep -Fxq "$SSID" && nmcli connection delete "$SSID" || true
-nmcli connection add type wifi ifname wlan0 con-name "${SSID}" ssid "${SSID}"
+log "Creating AP profile: SSID='${AP_SSID}', channel=${AP_CHANNEL}, WPA2..."
+nmcli -t -f NAME connection show | grep -Fxq "$AP_SSID" && nmcli connection delete "$AP_SSID" || true
+nmcli connection add type wifi ifname wlan0 con-name "${AP_SSID}" ssid "${AP_SSID}"
 
-nmcli connection modify "${SSID}" \
+nmcli connection modify "${AP_SSID}" \
   802-11-wireless.mode ap \
   802-11-wireless.band bg \
-  802-11-wireless.channel "${CHANNEL}" \
+  802-11-wireless.channel "${AP_CHANNEL}" \
   802-11-wireless.hidden no \
   ipv4.method shared \
   ipv6.method ignore \
   wifi-sec.key-mgmt wpa-psk \
-  wifi-sec.psk "${PSK}" \
+  wifi-sec.psk "${AP_PSK}" \
   connection.autoconnect yes \
   wifi.cloned-mac-address permanent
 
 # 6b) Channel width 20 MHz (different NM builds: try both variants)
-nmcli connection modify "${SSID}" 802-11-wireless.channel-width 20mhz 2>/dev/null || \
-nmcli connection modify "${SSID}" 802-11-wireless.channel-width ht20 2>/dev/null || true
+nmcli connection modify "${AP_SSID}" 802-11-wireless.channel-width 20mhz 2>/dev/null || \
+nmcli connection modify "${AP_SSID}" 802-11-wireless.channel-width ht20 2>/dev/null || true
 
 # 6c) iOS-friendly + disable PMF (mandatory 802.11w breaks on Broadcom)
-nmcli connection modify "${SSID}" +wifi-sec.proto rsn       || true
-nmcli connection modify "${SSID}" +wifi-sec.group ccmp      || true
-nmcli connection modify "${SSID}" +wifi-sec.pairwise ccmp   || true
-nmcli connection modify "${SSID}" 802-11-wireless-security.pmf 0 2>/dev/null || \
-nmcli connection modify "${SSID}" wifi-sec.pmf 0 2>/dev/null || true
+nmcli connection modify "${AP_SSID}" +wifi-sec.proto rsn       || true
+nmcli connection modify "${AP_SSID}" +wifi-sec.group ccmp      || true
+nmcli connection modify "${AP_SSID}" +wifi-sec.pairwise ccmp   || true
+nmcli connection modify "${AP_SSID}" 802-11-wireless-security.pmf 0 2>/dev/null || \
+nmcli connection modify "${AP_SSID}" wifi-sec.pmf 0 2>/dev/null || true
 
 # 7) Start AP with fallback channels (1/6/11 provide reliable options)
 start_ap() {
   local ch="$1"
   log "Starting AP on channel ${ch}..."
-  nmcli connection modify "${SSID}" 802-11-wireless.channel "${ch}" || true
-  nmcli connection up "${SSID}"
+  nmcli connection modify "${AP_SSID}" 802-11-wireless.channel "${ch}" || true
+  nmcli connection up "${AP_SSID}"
 }
 
 set +e
-start_ap "${CHANNEL}"
+start_ap "${AP_CHANNEL}"
 RC=$?
 if [ $RC -ne 0 ]; then
   log "Start failed. Attempting fallback on channels 1/6/11..."
   for ch in 1 6 11; do
-    [[ "$ch" == "$CHANNEL" ]] && continue
+    [[ "$ch" == "$AP_CHANNEL" ]] && continue
     start_ap "$ch"; RC=$?
-    [ $RC -eq 0 ] && { CHANNEL="$ch"; break; }
+    [ $RC -eq 0 ] && { AP_CHANNEL="$ch"; break; }
   done
 fi
 set -e
@@ -997,16 +1085,16 @@ echo
 nmcli -f DEVICE,TYPE,STATE,CONNECTION device status | sed 's/^/    /'
 echo
 
-if nmcli -t -f GENERAL.STATE connection show "${SSID}" >/dev/null 2>&1; then
-  echo "[OK] Completed. SSID: ${SSID}"
+if nmcli -t -f GENERAL.STATE connection show "${AP_SSID}" >/dev/null 2>&1; then
+  echo "[OK] Completed. SSID: ${AP_SSID}"
   echo "   WPA2 password: (still hidden for security)"
-  echo "   Channel: ${CHANNEL}"
+  echo "   Channel: ${AP_CHANNEL}"
   echo "   Device IP on wlan0: ${WLAN_IP:-(no IPv4 address detected yet)}"
   echo
   echo "Helpful commands:"
-  echo "  - Change channel: nmcli con mod \"${SSID}\" 802-11-wireless.channel 1 && nmcli con up \"${SSID}\""
-  echo "  - Update SSID   : nmcli con mod \"${SSID}\" 802-11-wireless.ssid \"NewSSID\" && nmcli con up \"${SSID}\""
-  echo "  - Update password: nmcli con mod \"${SSID}\" wifi-sec.psk \"NewPassword\" && nmcli con up \"${SSID}\""
+  echo "  - Change channel: nmcli con mod \"${AP_SSID}\" 802-11-wireless.channel 1 && nmcli con up \"${AP_SSID}\""
+  echo "  - Update SSID   : nmcli con mod \"${AP_SSID}\" 802-11-wireless.ssid \"NewSSID\" && nmcli con up \"${AP_SSID}\""
+  echo "  - Update password: nmcli con mod \"${AP_SSID}\" wifi-sec.psk \"NewPassword\" && nmcli con up \"${AP_SSID}\""
 else
   die "Access point is not active. Check logs:
   - journalctl -u NetworkManager -b --no-pager | tail -n 200
@@ -1033,8 +1121,7 @@ DEFAULT_SITE="/etc/nginx/sites-enabled/default"
 OWNER_USER="${SUDO_USER:-pi}"
 
 log "Installing packages (nginx)..."
-apt-get update -y
-apt-get install -y nginx
+info "nginx installation handled with base package setup."
 
 log "Creating directories and setting permissions..."
 mkdir -p "$WEB_ROOT"
@@ -1136,13 +1223,17 @@ sleep 5
 # === Reboot prompt ==============================================================
 info "Prompting for reboot."
 
-if confirm "Do you want to reboot the system?" "y"; then
-  info "Initiating reboot."
-  /sbin/shutdown -r now
+if [ $INTERACTIVE_MODE -eq 1 ]; then
+  if confirm "Do you want to reboot the system?" "y"; then
+    info "Initiating reboot."
+    /sbin/shutdown -r now
+  else
+    info "No reboot requested; exiting in 3 seconds."
+    sleep 3
+    info "Exiting installer without reboot."
+  fi
 else
-  info "No reboot requested; exiting in 3 seconds."
-  sleep 3
-  info "Exiting installer without reboot."
+  info "Unattended mode detected; skipping reboot prompt."
 fi
 
 exit
