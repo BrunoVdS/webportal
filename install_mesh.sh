@@ -57,6 +57,55 @@ error() {
 command_exists() { command -v "$1" >/dev/null ; }
 SYSTEMCTL=$(command -v systemctl || true)
 
+usage() {
+  cat <<'EOF'
+Usage: install_mesh.sh [--attended | --unattended]
+
+By default the installer starts in attended (interactive) mode.
+Pass --unattended to skip prompts and use existing configuration values.
+EOF
+}
+
+UNATTENDED_INSTALL=${UNATTENDED_INSTALL:-0}
+INSTALL_MODE="attended"
+if [ "$UNATTENDED_INSTALL" -eq 1 ]; then
+  INSTALL_MODE="unattended"
+fi
+
+parse_cli_args() {
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --attended)
+        INSTALL_MODE="attended"
+        UNATTENDED_INSTALL=0
+        ;;
+      --unattended)
+        INSTALL_MODE="unattended"
+        UNATTENDED_INSTALL=1
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      --)
+        shift
+        break
+        ;;
+      -*)
+        error "Unknown option: $1"
+        usage
+        exit 1
+        ;;
+      *)
+        error "Unexpected positional argument: $1"
+        usage
+        exit 1
+        ;;
+    esac
+    shift
+  done
+}
+
 ensure_network_manager_ready() {
   local nmcli_bin
   nmcli_bin=$(command -v nmcli || true)
@@ -401,7 +450,12 @@ INTERACTIVE_MODE=1
 
 gather_configuration() {
   local interactive=1
-  if [ "${UNATTENDED_INSTALL:-0}" -eq 1 ] || [ ! -t 0 ] || [ ! -t 1 ]; then
+  if [ "$UNATTENDED_INSTALL" -eq 1 ]; then
+    interactive=0
+  elif [ ! -t 0 ] || [ ! -t 1 ]; then
+    if [ "$INSTALL_MODE" = "attended" ]; then
+      warn "Attended mode requested but no interactive terminal detected; falling back to unattended defaults."
+    fi
     interactive=0
   fi
 
@@ -526,6 +580,8 @@ EOF
 }
 
 
+parse_cli_args "$@"
+
   # === Root only
 if [[ $EUID -ne 0 ]]; then
   error "This installer must be run as root."
@@ -557,6 +613,8 @@ info "Summary: OS=${RPI_OS_PRETTY_NAME:-$(. /etc/os-release; echo $PRETTY_NAME)}
   #add some info that before did not got logged,
 info "Log file created."
 info "Log file location: $LOGFILE"
+
+info "Installer running in ${INSTALL_MODE} mode."
 
 info "Detected operating system: ${RPI_OS_PRETTY_NAME:-unknown}."
 
