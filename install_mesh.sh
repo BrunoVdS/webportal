@@ -540,6 +540,74 @@ systemctl start rnsd
 info "Reticulum installed."
 
 
+# === Flask Web Application ====================================================
+info "Setting up Flask web application environment."
+
+FLASK_VENV_DIR="/opt/flask-venv"
+FLASK_APP_DIR="/opt/flask-app"
+FLASK_USER="${SUDO_USER:-root}"
+FLASK_GROUP="$(id -gn "$FLASK_USER" 2>/dev/null || echo "$FLASK_USER")"
+
+if [ ! -d "$FLASK_VENV_DIR" ]; then
+  python3 -m venv "$FLASK_VENV_DIR"
+  info "Created virtual environment in $FLASK_VENV_DIR"
+else
+  info "Using existing virtual environment in $FLASK_VENV_DIR"
+fi
+
+"$FLASK_VENV_DIR/bin/pip" install --upgrade pip wheel
+"$FLASK_VENV_DIR/bin/pip" install --upgrade flask gunicorn
+
+install -d -m 0755 -o "$FLASK_USER" -g "$FLASK_GROUP" "$FLASK_APP_DIR"
+
+if [ ! -f "$FLASK_APP_DIR/app.py" ]; then
+  cat <<'EOF_APP' >"$FLASK_APP_DIR/app.py"
+from flask import Flask
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def index():
+    return "Mesh Flask application is running."
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+EOF_APP
+  chown "$FLASK_USER":"$FLASK_GROUP" "$FLASK_APP_DIR/app.py"
+  info "Created example Flask application at $FLASK_APP_DIR/app.py"
+else
+  info "Existing Flask application detected at $FLASK_APP_DIR/app.py"
+fi
+
+chown -R "$FLASK_USER":"$FLASK_GROUP" "$FLASK_APP_DIR"
+
+cat >/etc/systemd/system/flask-app.service <<EOF_FLASK
+[Unit]
+Description=Mesh Flask Web Application
+After=network.target
+
+[Service]
+Type=simple
+User=$FLASK_USER
+Group=$FLASK_GROUP
+WorkingDirectory=$FLASK_APP_DIR
+Environment="PATH=$FLASK_VENV_DIR/bin"
+ExecStart=$FLASK_VENV_DIR/bin/gunicorn --bind 0.0.0.0:5000 app:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF_FLASK
+
+systemctl daemon-reload
+systemctl enable flask-app.service
+systemctl restart flask-app.service
+
+info "Flask application environment configured and service enabled."
+
+
 # === Meshtastic CLI =======================================================
 info "Installing Meshtastic CLI."
 
