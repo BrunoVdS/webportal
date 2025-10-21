@@ -611,6 +611,8 @@ PACKAGES=(
   nftables
   network-manager
   nginx
+  php-cli
+  php-fpm
 )
 
 info "Starting package installation."
@@ -1130,6 +1132,26 @@ chown -R "$OWNER_USER":www-data "$WEB_ROOT"
 chmod -R 775 "$FILES_DIR"
 
 log "Writing Nginx configuration..."
+PHP_FPM_SERVICE=$(systemctl list-unit-files 'php*-fpm.service' --no-legend 2>/dev/null | awk 'NR==1 {print $1}' || true)
+if [ -n "$PHP_FPM_SERVICE" ]; then
+  info "Ensuring $PHP_FPM_SERVICE is enabled."
+  systemctl enable "$PHP_FPM_SERVICE"
+  systemctl restart "$PHP_FPM_SERVICE"
+else
+  warn "No php-fpm service detected; PHP content may not be served until the service is installed."
+fi
+
+PHP_FPM_SOCKET=""
+if [ -d /run/php ]; then
+  PHP_FPM_SOCKET=$(find /run/php -maxdepth 1 -type s -name 'php*-fpm.sock' | head -n1 || true)
+fi
+if [ -z "$PHP_FPM_SOCKET" ]; then
+  PHP_FPM_SOCKET="/run/php/php-fpm.sock"
+  warn "Defaulting to PHP-FPM socket path $PHP_FPM_SOCKET in Nginx configuration."
+else
+  info "Using PHP-FPM socket $PHP_FPM_SOCKET."
+fi
+
 cat > "$SITE_AVAIL" <<'NGINXCONF'
 server {
     listen 80 default_server;
@@ -1138,31 +1160,39 @@ server {
     server_name _;
 
     root /var/www/server;
-    index index.html;
+    index index.php index.html;
 
-    # Directory listing for /files/
     location /files/ {
         autoindex on;
         autoindex_exact_size off;
         autoindex_localtime on;
-        # add rate limiting, headers, etc. here if needed
     }
 
-    # Simple landing page
-    location = / {
-        try_files $uri /index.html;
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass FASTCGI_SOCKET;
+    }
+
+    location ~ /\.ht {
+        deny all;
     }
 }
 NGINXCONF
 
+sed -i "s|FASTCGI_SOCKET|unix:$PHP_FPM_SOCKET|" "$SITE_AVAIL"
+
 ASSETS_DIR="$SCRIPT_DIR/web_assets"
 if [ -d "$ASSETS_DIR" ]; then
-  if [ ! -f "$WEB_ROOT/index.html" ] && [ -f "$ASSETS_DIR/index.html" ]; then
-    install -m 0644 "$ASSETS_DIR/index.html" "$WEB_ROOT/index.html"
-  fi
-  if [ ! -f "$WEB_ROOT/styles.css" ] && [ -f "$ASSETS_DIR/styles.css" ]; then
-    install -m 0644 "$ASSETS_DIR/styles.css" "$WEB_ROOT/styles.css"
-  fi
+  info "Deploying web assets from $ASSETS_DIR to $WEB_ROOT."
+  cp -a "$ASSETS_DIR/." "$WEB_ROOT/"
+  chown -R "$OWNER_USER":www-data "$WEB_ROOT"
+  chmod -R 775 "$FILES_DIR"
+else
+  warn "Web assets directory $ASSETS_DIR not found; default site will be empty."
 fi
 
 log "Activating site configuration..."
@@ -1173,6 +1203,10 @@ log "Testing configuration and restarting Nginx..."
 nginx -t
 systemctl enable nginx
 systemctl restart nginx
+
+if [ -n "$PHP_FPM_SERVICE" ]; then
+  systemctl restart "$PHP_FPM_SERVICE"
+fi
 
 echo
 echo "[OK] Completed. Place your files in: $FILES_DIR"
