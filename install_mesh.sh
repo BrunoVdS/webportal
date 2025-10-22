@@ -1069,7 +1069,13 @@ sleep 5
 # === MediaMTX streaming server ==================================================
 info "Installing MediaMTX streaming server."
 
-MEDIAMTX_VERSION="${MEDIAMTX_VERSION:-v1.15.2}"
+MEDIAMTX_VERSION_RAW="${MEDIAMTX_VERSION:-v1.15.2}"
+if [[ "$MEDIAMTX_VERSION_RAW" == v* ]]; then
+  MEDIAMTX_VERSION="$MEDIAMTX_VERSION_RAW"
+else
+  MEDIAMTX_VERSION="v${MEDIAMTX_VERSION_RAW}"
+  warn "MediaMTX version '${MEDIAMTX_VERSION_RAW}' does not include the 'v' prefix required by the release asset; using '${MEDIAMTX_VERSION}' instead."
+fi
 MEDIAMTX_BINARY="/usr/local/bin/mediamtx"
 MEDIAMTX_DATA_DIR="/var/lib/mediamtx"
 
