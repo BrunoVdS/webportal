@@ -1058,7 +1058,7 @@ TAILSCALE_APT_SOURCE="/etc/apt/sources.list.d/tailscale.list"
 info "Configuring Tailscale repository (${TAILSCALE_FLAVOR}) for '${TAILSCALE_DIST}'."
 
 install -d -m 0755 /usr/share/keyrings
-curl -fsSL "${TAILSCALE_REPO_BASE}/${TAILSCALE_DIST}.gpg" -o "$TAILSCALE_KEYRING"
+curl -fsSL "${TAILSCALE_REPO_BASE}/${TAILSCALE_DIST}.noarmor.gpg" -o "$TAILSCALE_KEYRING"
 chmod 0644 "$TAILSCALE_KEYRING"
 
 cat <<EOF_TAILSCALE_LIST >"$TAILSCALE_APT_SOURCE"
