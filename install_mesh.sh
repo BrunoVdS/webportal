@@ -1006,9 +1006,6 @@ apply_systemd_configuration
 sleep 5
 
 
-
-
-
 # === Tailscale secure networking =================================================
 info "Installing Tailscale secure networking."
 
@@ -1094,7 +1091,6 @@ info "Tailscale installed and service configuration queued for activation."
 apply_systemd_configuration
 
 sleep 5
-
 
 
 # === MediaMTX streaming server ==================================================
