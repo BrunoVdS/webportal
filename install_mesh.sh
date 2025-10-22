@@ -1014,40 +1014,13 @@ if [ -r /etc/os-release ]; then
   # shellcheck disable=SC1091
   . /etc/os-release
   TAILSCALE_DIST="${VERSION_CODENAME:-}"
-  TAILSCALE_ID="${ID:-}"
-  TAILSCALE_ID_LIKE="${ID_LIKE:-}"
-fi
-
-if [ -z "$TAILSCALE_DIST" ]; then
-  TAILSCALE_DIST="$(lsb_release -cs 2>/dev/null || true)"
 fi
 
 if [ -z "$TAILSCALE_DIST" ]; then
   die "Unable to determine distribution codename for Tailscale repository configuration."
 fi
 
-TAILSCALE_FLAVOR="debian"
-case "${TAILSCALE_ID:-}" in
-  ubuntu)
-    TAILSCALE_FLAVOR="ubuntu"
-    ;;
-  raspbian)
-    TAILSCALE_FLAVOR="raspbian"
-    ;;
-  debian)
-    TAILSCALE_FLAVOR="debian"
-    ;;
-  *)
-    if printf '%s' "${TAILSCALE_ID_LIKE:-}" | grep -qi 'ubuntu'; then
-      TAILSCALE_FLAVOR="ubuntu"
-    elif printf '%s' "${TAILSCALE_ID_LIKE:-}" | grep -qi 'raspbian'; then
-      TAILSCALE_FLAVOR="raspbian"
-    else
-      TAILSCALE_FLAVOR="debian"
-    fi
-    ;;
-esac
-
+TAILSCALE_FLAVOR="raspbian"
 TAILSCALE_REPO_BASE="https://pkgs.tailscale.com/stable/${TAILSCALE_FLAVOR}"
 TAILSCALE_KEYRING="/usr/share/keyrings/tailscale-archive-keyring.gpg"
 TAILSCALE_APT_SOURCE="/etc/apt/sources.list.d/tailscale.list"
@@ -1101,20 +1074,11 @@ MEDIAMTX_BINARY="/usr/local/bin/mediamtx"
 MEDIAMTX_DATA_DIR="/var/lib/mediamtx"
 
 MEDIAMTX_ARCH="$(dpkg --print-architecture)"
-case "$MEDIAMTX_ARCH" in
-  amd64)
-    MEDIAMTX_RELEASE_ARCH="amd64"
-    ;;
-  arm64)
-    MEDIAMTX_RELEASE_ARCH="arm64v8"
-    ;;
-  armhf)
-    MEDIAMTX_RELEASE_ARCH="arm32v7"
-    ;;
-  *)
-    die "Unsupported architecture '$MEDIAMTX_ARCH' for MediaMTX installation."
-    ;;
-esac
+if [ "$MEDIAMTX_ARCH" != "arm64" ]; then
+  die "This installer expects Raspberry Pi OS 64-bit (arm64); detected architecture '$MEDIAMTX_ARCH'."
+fi
+
+MEDIAMTX_RELEASE_ARCH="arm64v8"
 
 MEDIAMTX_TARBALL="mediamtx_${MEDIAMTX_VERSION}_linux_${MEDIAMTX_RELEASE_ARCH}.tar.gz"
 MEDIAMTX_URL="https://github.com/bluenviron/mediamtx/releases/download/${MEDIAMTX_VERSION}/${MEDIAMTX_TARBALL}"
