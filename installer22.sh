@@ -914,9 +914,15 @@ info "Reticulum installed in isolated virtual environment."
 info "Reticulum service configuration queued for activation."
 
   # === creating Reticulum Config file
-info "Creating the custom config file (/root/.reticulum/config)."
+info "Creating the custom config file (${CONFIG_PATH})."
 
-CONFIG_DIR="/root/.reticulum"
+INSTALL_USER=${SUDO_USER:-$USER}
+INSTALL_HOME=$(getent passwd "$INSTALL_USER" | cut -d: -f6 2>/dev/null || true)
+if [ -z "$INSTALL_HOME" ] || [ "$INSTALL_HOME" = "/nonexistent" ]; then
+  INSTALL_HOME=$(eval echo "~$INSTALL_USER" 2>/dev/null || echo "$HOME")
+fi
+
+CONFIG_DIR="$INSTALL_HOME/.reticulum"
 CONFIG_PATH="$CONFIG_DIR/config"
 
 mkdir -p "$CONFIG_DIR"
