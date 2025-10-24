@@ -913,17 +913,29 @@ fi
 info "Reticulum installed in isolated virtual environment."
 info "Reticulum service configuration queued for activation."
 
-info "Creating the custom config file (/.reticulum."
+  # === creating Reticulum Config file
+info "Creating the custom config file (/root/.reticulum/config)."
 
-mkdir -p /root/.recticulum
-rnsd --config /root/.recticulum/config
+CONFIG_DIR="/root/.reticulum"
+CONFIG_PATH="$CONFIG_DIR/config"
 
+mkdir -p "$CONFIG_DIR"
+if [ ! -f "$CONFIG_PATH" ]; then
+  if ! rnsd --config "$CONFIG_PATH" --create; then
+    warn "Failed to generate default Reticulum config at $CONFIG_PATH; creating empty placeholder."
+    : > "$CONFIG_PATH"
+  fi
+fi
+
+  # Editing Reticulum Config file
 info "Editing Reticulum config file."
 
-CONFIG_PATH="/root/.reticulum/config.txt"
-
 # 1. Change enable_transport to True
-sed -i 's/^\(\s*enable_transport\s*=\s*\)False/\1True/' "$CONFIG_PATH"
+if grep -q '^\s*enable_transport\s*=' "$CONFIG_PATH"; then
+  sed -i 's/^\(\s*enable_transport\s*=\s*\)False/\1True/' "$CONFIG_PATH"
+else
+  printf '\n[reticulum]\n  enable_transport = True\n' >> "$CONFIG_PATH"
+fi
 
 # 2. Add TCP Server Interface if it doesn’t already exist
 if ! grep -q "\[\[TCP Server Interface\]\]" "$CONFIG_PATH"; then
