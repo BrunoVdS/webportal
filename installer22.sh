@@ -913,6 +913,33 @@ fi
 info "Reticulum installed in isolated virtual environment."
 info "Reticulum service configuration queued for activation."
 
+info "Creating the custom config file (/.reticulum."
+
+mkdir -p /root/.recticulum
+rnsd --config /root/.recticulum/config
+
+info "Editing Reticulum config file."
+
+CONFIG_PATH="/root/.reticulum/config.txt"
+
+# 1. Change enable_transport to True
+sed -i 's/^\(\s*enable_transport\s*=\s*\)False/\1True/' "$CONFIG_PATH"
+
+# 2. Add TCP Server Interface if it doesn’t already exist
+if ! grep -q "\[\[TCP Server Interface\]\]" "$CONFIG_PATH"; then
+  cat <<'EOF' >> "$CONFIG_PATH"
+
+  [[TCP Server Interface]]
+    type = TCPServerInterface
+    interface_enabled = True
+    listen_ip = 0.0.0.0  # Listen on all interfaces
+    listen_port = 4242   # Choose any port you like
+EOF
+fi
+
+info "Updated Reticulum configuration with TCP Server Interface and enabled transport."
+
+
 sleep 5
 
 # === Meshtastic CLI =======================================================
@@ -1126,84 +1153,10 @@ sleep 5
 
 
 # === NFtables configuration =====================================================
-info "Configuring nftables firewall."
 
-NFTABLES_CONF="/etc/nftables.conf"
-if [ -f "$NFTABLES_CONF" ]; then
-  backup="$NFTABLES_CONF.$(date +%s).bak"
-  cp "$NFTABLES_CONF" "$backup"
-  info "Existing nftables config backed up to $backup"
-fi
 
-cat <<'EOF' >"$NFTABLES_CONF"
-#!/usr/sbin/nft -f
+# Needs to be completly rebuild.
 
-flush ruleset
-
-table inet filter {
-  chain input {
-    type filter hook input priority 0;
-    policy drop;
-
-    # Basis
-    iif lo accept
-    ct state established,related accept
-
-    # ICMPv4 essentieel (ping + PMTU)
-    ip protocol icmp icmp type { echo-request, echo-reply, time-exceeded, destination-unreachable, parameter-problem } accept
-
-    # ICMPv6 essentieel (ping + ND + PMTU)
-    ip6 nexthdr icmpv6 icmpv6 type { echo-request, echo-reply, router-solicitation, router-advertisement, neighbor-solicitation, neighbor-advertisement, packet-too-big, time-exceeded, parameter-problem } accept
-
-    # Toegestane services per interface
-    iifname "wlan0" tcp dport {22,80,443} accept
-    iifname "eth0"  tcp dport 22 accept
-    iifname "bat0"  tcp dport 4242 accept
-    iifname "bat0"  udp dport 4960 accept
-
-    # (Optioneel) laat ping naar jou toe op bat0 expliciet toe
-    iifname "bat0" ip protocol icmp icmp type echo-request accept
-    iifname "bat0" ip6 nexthdr icmpv6 icmpv6 type echo-request accept
-  }
-
-  chain forward {
-    type filter hook forward priority 0;
-    policy drop;
-
-    # Je had alleen DROPs tussen wlan0 <-> bat0.
-    # Als je écht wilt isoleren, laat dit staan EN voeg gerichte accepts toe voor wat wél mag.
-    iifname "wlan0" oifname "bat0" drop
-    iifname "bat0"  oifname "wlan0" drop
-
-    # (Alleen als je dit hostje als router gebruikt)
-    # bat0 -> eth0 naar internet toestaan
-    iifname "bat0" oifname "eth0" accept
-    # en terug
-    iifname "eth0" oifname "bat0" ct state established,related accept
-  }
-
-  chain output {
-    type filter hook output priority 0;
-    policy accept;
-  }
-}
-
-# NAT alleen als hosts achter bat0 via JOU het internet op moeten
-table ip nat {
-  chain postrouting {
-    type nat hook postrouting priority 100;
-    oifname "eth0" masquerade
-  }
-}
-EOF
-
-chmod 0644 "$NFTABLES_CONF"
-nft -f "$NFTABLES_CONF"
-systemctl enable --now nftables
-
-info "nftables firewall configured and enabled."
-
-sleep 5
 
 # === Access Point setup =======================================================
     # === Create AP on wlan0
