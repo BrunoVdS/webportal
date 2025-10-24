@@ -17,7 +17,7 @@
   # always-on. This directive is optional and can be removed
   # for brevity.
   
-  enable_transport = True
+  enable_transport = False
   
   
   # By default, the first program to launch the Reticulum
@@ -93,14 +93,6 @@
   # should be enabled by default in almost any OS. See
   # the Reticulum Manual for more configuration options.
 
-  [[BTA Mesh]]
-    type = UDPInterface
-    interface = bat0
-    listen_port = 4960
-    enabled = Yes
-
-  [[Mesh TCP Gateway]]
-    type = TCPServerInterface
-    listen_ip = 0.0.0.0.   # Security build in via nftables
-    listen_port = 4242
+    [[Default Interface]]
+    type = AutoInterface
     enabled = Yes
