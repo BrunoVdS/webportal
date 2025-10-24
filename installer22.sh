@@ -1197,8 +1197,29 @@ table ip nat {
 }
 EOF
 
-chmod 0644 "$NFTABLES_CONF"
-nft -f "$NFTABLES_CONF"
+  chmod 0644 "$NFTABLES_CONF"
+
+  MESH_INTERFACE="bat0"
+  if [ -r "$CONFIG_FILE" ]; then
+    # shellcheck disable=SC1090
+    . "$CONFIG_FILE"
+    if [ -n "${BATIF:-}" ]; then
+      MESH_INTERFACE="$BATIF"
+    fi
+  fi
+
+  if ! ip link show "$MESH_INTERFACE" >/dev/null 2>&1; then
+    info "Mesh interface $MESH_INTERFACE is not present; bringing mesh up before applying firewall rules."
+    if declare -F mesh_up >/dev/null 2>&1; then
+      mesh_up
+    elif command -v meshctl >/dev/null 2>&1; then
+      meshctl up
+    else
+      warn "Unable to automatically bring up mesh interface $MESH_INTERFACE; nftables rules may fail."
+    fi
+  fi
+
+  nft -f "$NFTABLES_CONF"
 systemctl enable --now nftables
 
 info "nftables firewall configured and enabled."
