@@ -914,8 +914,6 @@ info "Reticulum installed in isolated virtual environment."
 info "Reticulum service configuration queued for activation."
 
   # === creating Reticulum Config file
-info "Creating the custom config file (${CONFIG_PATH})."
-
 INSTALL_USER=${SUDO_USER:-$USER}
 INSTALL_HOME=$(getent passwd "$INSTALL_USER" | cut -d: -f6 2>/dev/null || true)
 if [ -z "$INSTALL_HOME" ] || [ "$INSTALL_HOME" = "/nonexistent" ]; then
@@ -925,37 +923,34 @@ fi
 CONFIG_DIR="$INSTALL_HOME/.reticulum"
 CONFIG_PATH="$CONFIG_DIR/config"
 
+info "Creating the custom config file (${CONFIG_PATH})."
+
 mkdir -p "$CONFIG_DIR"
-if [ ! -f "$CONFIG_PATH" ]; then
-  if ! rnsd --config "$CONFIG_PATH" --create; then
-    warn "Failed to generate default Reticulum config at $CONFIG_PATH; creating empty placeholder."
-    : > "$CONFIG_PATH"
-  fi
-fi
 
-  # Editing Reticulum Config file
-info "Editing Reticulum config file."
-
-# 1. Change enable_transport to True
-if grep -q '^\s*enable_transport\s*=' "$CONFIG_PATH"; then
-  sed -i 's/^\(\s*enable_transport\s*=\s*\)False/\1True/' "$CONFIG_PATH"
-else
-  printf '\n[reticulum]\n  enable_transport = True\n' >> "$CONFIG_PATH"
-fi
-
-# 2. Add TCP Server Interface if it doesn’t already exist
-if ! grep -q "\[\[TCP Server Interface\]\]" "$CONFIG_PATH"; then
-  cat <<'EOF' >> "$CONFIG_PATH"
-
+cat <<'EOF' >"$CONFIG_PATH"
+[reticulum]
+    enable_transport = True
+    share_instance = Yes
+    instance_name = default
+  # shared_instance_port = 37428
+  # instance_control_port = 37429
+  # shared_instance_type = tcp
+  # panic_on_interface_error = No
+[logging]
+  loglevel = 4
+[interfaces]
+  [[Default Interface]]
+    type = AutoInterface
+    enabled = Yes
   [[TCP Server Interface]]
     type = TCPServerInterface
     interface_enabled = True
     listen_ip = 0.0.0.0  # Listen on all interfaces
     listen_port = 4242   # Choose any port you like
 EOF
-fi
 
-info "Updated Reticulum configuration with TCP Server Interface and enabled transport."
+
+info "Updated Reticulum configuration file."
 
 
 sleep 5
