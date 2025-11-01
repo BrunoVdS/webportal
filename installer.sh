@@ -553,24 +553,38 @@ ensure_networkmanager_unmanages_interfaces() {
   local nm_conf_dir="/etc/NetworkManager/conf.d"
   local unmanaged_file="$nm_conf_dir/mesh-radio-unmanaged.conf"
   local -a interfaces=("$IFACE")
+  local -a unique_interfaces=()
+  local unmanaged_devices="" nm_iface interface_label="" added=""
+
   if [ -n "${WIRED_IFACE:-}" ]; then
     interfaces+=("$WIRED_IFACE")
   fi
-  local unmanaged_devices="" nm_iface interface_label=""
 
   if [ -n "${AP_INTERFACE:-}" ] && [ "$AP_INTERFACE" != "$IFACE" ]; then
     interfaces+=("$AP_INTERFACE")
   fi
 
+  interfaces+=("wlan0" "wlan1" "eth0")
+
   install -d -m 0755 "$nm_conf_dir"
 
   for nm_iface in "${interfaces[@]}"; do
-    if [ -n "$nm_iface" ]; then
-      if [ -n "$unmanaged_devices" ]; then
-        unmanaged_devices+=";"
-      fi
-      unmanaged_devices+="interface-name:${nm_iface}"
+    if [ -z "$nm_iface" ]; then
+      continue
     fi
+
+    if [[ " $added " == *" $nm_iface "* ]]; then
+      continue
+    fi
+
+    added+=" $nm_iface"
+    unique_interfaces+=("$nm_iface")
+
+    if [ -n "$unmanaged_devices" ]; then
+      unmanaged_devices+=";"
+    fi
+
+    unmanaged_devices+="interface-name:${nm_iface}"
   done
 
   if [ -n "$unmanaged_devices" ]; then
@@ -579,13 +593,13 @@ ensure_networkmanager_unmanages_interfaces() {
 unmanaged-devices=$unmanaged_devices
 EOF
 
-    interface_label="${interfaces[*]}"
+    interface_label="${added# }"
     info "Configured NetworkManager to leave the following interfaces unmanaged: ${interface_label}."
   fi
 
   nmcli general reload || true
 
-  for nm_iface in "${interfaces[@]}"; do
+  for nm_iface in "${unique_interfaces[@]}"; do
     if [ -n "$nm_iface" ]; then
       nmcli device disconnect "$nm_iface" >/dev/null 2>&1 || true
       nmcli device set "$nm_iface" managed no >/dev/null 2>&1 || true
