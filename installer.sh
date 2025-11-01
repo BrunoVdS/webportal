@@ -434,6 +434,7 @@ gather_configuration() {
 
   : "${MESH_ID:=MESHNODE}"
   : "${IFACE:=wlan1}"
+  : "${WIRED_IFACE:=eth0}"
   : "${BATIF:=bat0}"
   : "${IP_CIDR:=192.168.0.2/24}"
   : "${COUNTRY:=BE}"
@@ -455,6 +456,7 @@ gather_configuration() {
     info "Gathering mesh configuration."
     ask "Mesh ID" "$MESH_ID" MESH_ID
     ask "Wireless interface" "$IFACE" IFACE
+    ask "Wired interface to bridge into \${BATIF} (type 'none' to skip)" "$WIRED_IFACE" WIRED_IFACE
     ask "batman-adv interface (bat)" "$BATIF" BATIF
     ask "Node IP/CIDR on ${BATIF}" "$IP_CIDR" IP_CIDR
     ask "Country code (regdom)" "$COUNTRY" COUNTRY
@@ -474,6 +476,10 @@ gather_configuration() {
     ask "Access point DHCP lease" "$AP_DHCP_LEASE" AP_DHCP_LEASE
   else
     info "Running in unattended mode; using configuration defaults for mesh."
+  fi
+
+  if [[ "${WIRED_IFACE,,}" = "none" ]]; then
+    WIRED_IFACE=""
   fi
 
   if ! validate_ipv4_cidr "$IP_CIDR"; then
@@ -536,6 +542,9 @@ ensure_networkmanager_unmanages_interfaces() {
   local nm_conf_dir="/etc/NetworkManager/conf.d"
   local unmanaged_file="$nm_conf_dir/mesh-radio-unmanaged.conf"
   local -a interfaces=("$IFACE")
+  if [ -n "${WIRED_IFACE:-}" ]; then
+    interfaces+=("$WIRED_IFACE")
+  fi
   local unmanaged_devices="" nm_iface interface_label=""
 
   if [ -n "${AP_INTERFACE:-}" ] && [ "$AP_INTERFACE" != "$IFACE" ]; then
@@ -710,6 +719,7 @@ FREQ="$FREQ"
 BANDWIDTH="$BANDWIDTH"
 BSSID="$BSSID"
 IFACE="$IFACE"
+WIRED_IFACE="$WIRED_IFACE"
 COUNTRY="$COUNTRY"
 BATIF="$BATIF"
 MTU="$MTU"
@@ -723,6 +733,9 @@ mesh_up() {
   modprobe batman-adv
   iw reg set "\$COUNTRY" || true
   command -v nmcli >/dev/null 2>&1 && nmcli dev set "\$IFACE" managed no || true
+  if [ -n "\$WIRED_IFACE" ]; then
+    command -v nmcli >/dev/null 2>&1 && nmcli dev set "\$WIRED_IFACE" managed no || true
+  fi
 
   ip link set "\$IFACE" down || true
   if mesh_supported; then
@@ -737,6 +750,11 @@ mesh_up() {
 
   batctl if add "\$IFACE" || true
   ip link set up dev "\$IFACE"
+  if [ -n "\$WIRED_IFACE" ]; then
+    ip link set "\$WIRED_IFACE" up || true
+    batctl if add "\$WIRED_IFACE" || true
+    ip link set up dev "\$WIRED_IFACE" || true
+  fi
   ip link set up dev "\$BATIF"
   ip link set dev "\$BATIF" mtu "\$MTU" || true
   ip addr add "\$IP_CIDR" dev "\$BATIF" || true
@@ -746,12 +764,20 @@ mesh_down() {
   ip addr flush dev "\$BATIF" || true
   ip link set "\$BATIF" down || true
   batctl if del "\$IFACE" 2>/dev/null || true
+  if [ -n "\$WIRED_IFACE" ]; then
+    batctl if del "\$WIRED_IFACE" 2>/dev/null || true
+    ip link set "\$WIRED_IFACE" down || true
+  fi
   iw dev "\$IFACE" mesh leave 2>/dev/null || true
   ip link set "\$IFACE" down || true
 }
 
 mesh_status() {
-  echo "== Interfaces =="; ip -br link | grep -E "\$IFACE|\$BATIF" || true
+  local match="\$IFACE|\$BATIF"
+  if [ -n "\$WIRED_IFACE" ]; then
+    match="\$match|\$WIRED_IFACE"
+  fi
+  echo "== Interfaces =="; ip -br link | grep -E "\$match" || true
   echo "== batctl if =="; batctl if || true
   echo "== originators =="; batctl -m "\$BATIF" o 2>/dev/null || true
   echo "== neighbors =="; batctl n 2>/dev/null || true
