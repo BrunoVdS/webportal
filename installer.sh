@@ -66,6 +66,54 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+verify_supported_os() {
+  if [ ! -r /etc/os-release ]; then
+    echo "ERROR: Unable to verify host operating system because /etc/os-release is missing." >&2
+    exit 1
+  fi
+
+  # shellcheck disable=SC1091
+  . /etc/os-release
+
+  local identifiers="${ID:-} ${ID_LIKE:-}"
+  local supported=0
+
+  for os_id in $identifiers; do
+    case "$os_id" in
+      debian|ubuntu)
+        supported=1
+        break
+        ;;
+    esac
+  done
+
+  if [ "$supported" -ne 1 ]; then
+    echo "ERROR: Unsupported operating system: ${PRETTY_NAME:-${ID:-unknown}}. This installer requires Debian or Ubuntu." >&2
+    exit 1
+  fi
+
+  local -a missing_required=()
+  local required_tool
+  for required_tool in systemctl python3 pip; do
+    if ! command_exists "$required_tool"; then
+      missing_required+=("$required_tool")
+    fi
+  done
+
+  if [ "${#missing_required[@]}" -gt 0 ]; then
+    echo "ERROR: Missing required utilities: ${missing_required[*]}. Please install them before running the installer." >&2
+    exit 1
+  fi
+
+  local -a optional_tools=(nmcli)
+  local optional_tool
+  for optional_tool in "${optional_tools[@]}"; do
+    if ! command_exists "$optional_tool"; then
+      echo "WARN: Optional utility '$optional_tool' not found. Related capabilities will be skipped." >&2
+    fi
+  done
+}
+
   # === Defining attended of unattended install helpers
 usage() {
   cat <<USAGE
@@ -1080,6 +1128,7 @@ install_packages() {
 # === Main installation sequence ========================================================
 main() {
   parse_cli_args "$@"
+  verify_supported_os
 
   if [[ $EUID -ne 0 ]]; then
     error "This installer must be run as root."
